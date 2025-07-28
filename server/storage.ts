@@ -1,4 +1,7 @@
 import { type Game, type InsertGame, type GameStats, type InsertGameStats } from "@shared/schema";
+import { games, gameStats } from "@shared/schema";
+import { db } from "./db";
+import { eq, desc } from "drizzle-orm";
 import { randomUUID } from "crypto";
 
 export interface IStorage {
@@ -14,24 +17,10 @@ export interface IStorage {
   updateStats(stats: Partial<InsertGameStats>): Promise<void>;
 }
 
-export class MemStorage implements IStorage {
-  private games: Map<string, Game>;
-  private stats: GameStats | undefined;
-
-  constructor() {
-    this.games = new Map();
-    this.stats = {
-      id: randomUUID(),
-      totalPool: "0",
-      totalWins: 0,
-      lastWinAmount: "0",
-      updatedAt: new Date(),
-    };
-  }
-
+export class DatabaseStorage implements IStorage {
   async createGame(insertGame: InsertGame): Promise<Game> {
     const id = randomUUID();
-    const game: Game = { 
+    const gameData = {
       ...insertGame,
       id,
       createdAt: new Date(),
@@ -40,12 +29,14 @@ export class MemStorage implements IStorage {
       winAmount: insertGame.winAmount || "0",
       payoutSignature: insertGame.payoutSignature || null,
     };
-    this.games.set(id, game);
+    
+    const [game] = await db.insert(games).values(gameData).returning();
     
     // Update pool if it's a purchase
     if (insertGame.purchaseSignature) {
       const poolIncrease = parseFloat(insertGame.ticketType) * 0.9; // 90% goes to pool
-      const currentPool = parseFloat(this.stats?.totalPool || "0");
+      const currentStats = await this.getStats();
+      const currentPool = parseFloat(currentStats?.totalPool || "0");
       await this.updateStats({ 
         totalPool: (currentPool + poolIncrease).toString(),
       });
@@ -55,47 +46,55 @@ export class MemStorage implements IStorage {
   }
 
   async getGame(id: string): Promise<Game | undefined> {
-    return this.games.get(id);
+    const [game] = await db.select().from(games).where(eq(games.id, id));
+    return game || undefined;
   }
 
   async getGamesByWallet(wallet: string): Promise<Game[]> {
-    return Array.from(this.games.values()).filter(
-      (game) => game.playerWallet === wallet,
-    );
+    return await db.select().from(games).where(eq(games.playerWallet, wallet));
   }
 
-  async getRecentWins(limit = 10): Promise<Game[]> {
-    return Array.from(this.games.values())
-      .filter(game => game.isWin)
-      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
-      .slice(0, limit);
+  async getRecentWins(limit: number = 10): Promise<Game[]> {
+    return await db
+      .select()
+      .from(games)
+      .where(eq(games.isWin, true))
+      .orderBy(desc(games.createdAt))
+      .limit(limit);
   }
 
   async updateGamePayout(id: string, payoutSignature: string): Promise<void> {
-    const game = this.games.get(id);
-    if (game) {
-      game.payoutSignature = payoutSignature;
-      this.games.set(id, game);
-    }
+    await db
+      .update(games)
+      .set({ payoutSignature })
+      .where(eq(games.id, id));
   }
 
   async getStats(): Promise<GameStats | undefined> {
-    return this.stats;
+    const [stats] = await db.select().from(gameStats).limit(1);
+    return stats || undefined;
   }
 
   async updateStats(updates: Partial<InsertGameStats>): Promise<void> {
-    if (this.stats) {
-      this.stats = {
-        ...this.stats,
+    const existingStats = await this.getStats();
+    
+    if (existingStats) {
+      await db
+        .update(gameStats)
+        .set({ ...updates, updatedAt: new Date() })
+        .where(eq(gameStats.id, existingStats.id));
+    } else {
+      const newStats = {
+        id: randomUUID(),
+        totalPool: "0",
+        totalWins: 0,
+        lastWinAmount: "0",
         ...updates,
         updatedAt: new Date(),
       };
-      
-      if (updates.totalWins !== undefined) {
-        this.stats.totalWins = updates.totalWins;
-      }
+      await db.insert(gameStats).values(newStats);
     }
   }
 }
 
-export const storage = new MemStorage();
+export const storage = new DatabaseStorage();
