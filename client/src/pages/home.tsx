@@ -101,11 +101,15 @@ export default function Home() {
         {/* Connect Wallet Message */}
         {!gameState.walletAddress && (
           <section className="mb-12 text-center">
-            <Card className="max-w-md mx-auto bg-dark-purple/30 border border-neon-cyan/30 backdrop-blur-sm">
+            <Card className="max-w-lg mx-auto bg-dark-purple/30 border border-neon-cyan/30 backdrop-blur-sm">
               <CardContent className="p-8">
                 <h3 className="text-2xl font-black text-neon-cyan mb-4">Welcome to Scratch 'n SOL!</h3>
                 <p className="text-gray-300 mb-6">Connect your Solana wallet to start playing our exciting scratch card game and win up to 10 SOL!</p>
-                <p className="text-neon-orange text-sm">Please connect your wallet above to begin</p>
+                <div className="bg-neon-orange/10 border border-neon-orange/30 rounded-lg p-4 mb-4">
+                  <p className="text-neon-orange text-sm font-bold">🎮 DEMO MODE AVAILABLE</p>
+                  <p className="text-gray-300 text-xs mt-1">Click "Connect Wallet" above to try the game in demo mode, even without a Solana wallet installed!</p>
+                </div>
+                <p className="text-neon-cyan text-sm">Click the "Connect Wallet" button above to begin</p>
               </CardContent>
             </Card>
           </section>

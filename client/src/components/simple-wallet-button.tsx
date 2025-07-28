@@ -20,11 +20,21 @@ export function SimpleWalletButton({ onConnect }: SimpleWalletButtonProps) {
         setConnected(true);
         onConnect?.(walletAddress);
       } else {
-        alert('Please install Phantom wallet or another Solana wallet to play');
+        // For demo purposes, simulate wallet connection
+        const demoWallet = `Demo${Math.random().toString(36).substr(2, 9)}`;
+        setPublicKey(demoWallet);
+        setConnected(true);
+        onConnect?.(demoWallet);
+        alert('Demo mode activated! In production, please install Phantom wallet.');
       }
     } catch (error) {
       console.error('Failed to connect wallet:', error);
-      alert('Failed to connect wallet. Please try again.');
+      // Fallback to demo mode
+      const demoWallet = `Demo${Math.random().toString(36).substr(2, 9)}`;
+      setPublicKey(demoWallet);
+      setConnected(true);
+      onConnect?.(demoWallet);
+      alert('Demo mode activated! Wallet connection failed, using demo mode.');
     }
   };
 
