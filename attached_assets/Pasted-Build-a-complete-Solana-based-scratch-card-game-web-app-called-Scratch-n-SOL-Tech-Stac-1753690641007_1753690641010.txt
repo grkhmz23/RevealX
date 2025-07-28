@@ -1,0 +1,82 @@
+Build a complete Solana-based scratch card game web app called "Scratch 'n SOL".
+
+### 💻 Tech Stack
+- Use **React** + **Tailwind CSS** for frontend
+- Use **Solana Wallet Adapter** (NOT simulated wallet)
+- Backend using Node.js + Express (optional for server-side prize payout logic)
+- Use `@solana/web3.js` for all Solana interactions
+
+### 🎯 Functionality
+
+#### 1. 🧾 Ticket Options
+Create 5 card types:
+- 0.1 SOL → Max win: 1 SOL
+- 0.2 SOL → Max win: 2 SOL
+- 0.3 SOL → Max win: 3 SOL
+- 0.5 SOL → Max win: 5 SOL
+- 1.0 SOL → Max win: 10 SOL
+
+Let users choose one card to play.
+
+#### 2. 💳 Wallet Integration
+- Implement full **Solana Wallet Adapter** support (not simulated!)
+- Support Phantom, Solflare, Backpack
+- Display connected wallet address
+- Require user to sign transactions to buy a scratch card
+
+#### 3. 🪙 Payment Logic
+When a card is bought:
+- Deduct the selected amount from user’s wallet
+- Split:
+  - 10% to `TEAM_WALLET_PUBLIC_KEY`
+  - 90% to `POOL_WALLET_PUBLIC_KEY`
+
+#### 4. 🎲 Scratch Card Logic
+After payment:
+- Show a scratch card with 3 slots (use placeholders for now)
+- Generate 3 random symbols (e.g. 🎉, 💎, ❌) via frontend logic
+- If all 3 match, determine multiplier:
+  - 1x, 2x, 5x, or 10x
+- Payout = Card Price × Multiplier
+- Send payout SOL to user **from pool wallet**
+
+#### 5. 💼 Pool Wallet Control
+- In backend, store and use **POOL_WALLET_PRIVATE_KEY** securely
+- Use this private key to sign transactions and send SOL to winners
+
+> DO NOT expose the private key to frontend!
+
+#### 6. 💰 Manual Config (Environment Variables)
+Let these be configurable:
+```env
+REACT_APP_TEAM_WALLET=YourTeamWalletPublicKeyHere
+REACT_APP_POOL_WALLET=YourPoolWalletPublicKeyHere
+POOL_WALLET_PRIVATE_KEY=PrivateKeyBase58EncodedOrJSON
+7. 💥 Bonuses (Optional but nice)
+Add "You Lost / You Won X SOL!" result screen
+
+Track recent wins on homepage
+
+Include "Scratch 'n SOL" pixel neon logo top-left
+
+🎨 Assets
+Use placeholders for cards and insert uploaded PNG card designs later.
+Leave symbol area blank and fill dynamically in code.
+
+🛠 Notes
+You can use Math.random() to simulate winning logic for now
+
+In future, integrate on-chain randomness via Switchboard or Chainlink VRF
+
+✅ Deliverables
+Fully working web app
+
+Deployed on Replit or Vercel
+
+All Solana logic using real wallets
+
+Scratch cards functional with prize payout
+
+yaml
+Copier
+Modifier
