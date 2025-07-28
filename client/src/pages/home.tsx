@@ -97,52 +97,24 @@ export default function Home() {
         {/* Game Stats */}
         <GameStats />
 
-        {/* Ticket Selection - Demo Mode */}
-        {isDemoMode && !gameState.selectedTicket && (
+        {/* Ticket Selection - Always Show */}
+        {!gameState.selectedTicket && (
           <TicketSelection onTicketSelect={handleTicketSelect} />
         )}
 
-        {/* Ticket Selection - Real Mode */}
-        {isRealMode && !gameState.selectedTicket && gameState.walletAddress && (
-          <TicketSelection onTicketSelect={handleTicketSelect} />
-        )}
-
-        {/* Connect Wallet Message - Real Mode Only */}
-        {isRealMode && !gameState.walletAddress && (
-          <section className="mb-12 text-center">
-            <Card className="max-w-lg mx-auto bg-dark-purple/30 border border-electric-blue/30 backdrop-blur-sm">
-              <CardContent className="p-8">
-                <h3 className="text-2xl font-black text-electric-blue mb-4">Real Mode Active</h3>
-                <p className="text-gray-300 mb-6">Connect your Solana wallet to play with real SOL and win actual prizes!</p>
-                <div className="bg-electric-blue/10 border border-electric-blue/30 rounded-lg p-4 mb-4">
-                  <p className="text-electric-blue text-sm font-bold">🟣 REAL SOL REQUIRED</p>
-                  <p className="text-gray-300 text-xs mt-1">This mode uses actual SOL from your wallet for purchases and pays out real winnings</p>
-                </div>
-                <p className="text-electric-blue text-sm">Click the "Connect Wallet" button above to begin</p>
-              </CardContent>
-            </Card>
-          </section>
-        )}
-
-        {/* Scratch Card Game - Demo Mode */}
-        {isDemoMode && gameState.selectedTicket && (
+        {/* Scratch Card Game */}
+        {gameState.selectedTicket && (
           <ScratchCard
             ticketCost={gameState.selectedTicket}
             onGameComplete={handleGameComplete}
             onNewGame={handleNewGame}
-            walletAddress="demo-wallet"
-            isDemoMode={true}
-          />
-        )}
-
-        {/* Scratch Card Game - Real Mode */}
-        {isRealMode && gameState.selectedTicket && gameState.walletAddress && (
-          <ScratchCard
-            ticketCost={gameState.selectedTicket}
-            onGameComplete={handleGameComplete}
-            onNewGame={handleNewGame}
-            walletAddress={gameState.walletAddress}
-            isDemoMode={false}
+            walletAddress={isDemoMode ? "demo-wallet" : (gameState.walletAddress || "")}
+            isDemoMode={isDemoMode}
+            onWalletConnect={() => {
+              // Auto-trigger wallet connection when needed
+              const walletButton = document.querySelector('[data-wallet-button]') as HTMLButtonElement;
+              walletButton?.click();
+            }}
           />
         )}
 

@@ -13,6 +13,7 @@ interface ScratchCardProps {
   onNewGame: () => void;
   walletAddress: string;
   isDemoMode: boolean;
+  onWalletConnect?: () => void;
 }
 
 interface WinModalProps {
@@ -69,7 +70,7 @@ function WinModal({ isWin, multiplier, winAmount, isDemoMode, onNewGame }: WinMo
   );
 }
 
-export function ScratchCard({ ticketCost, onGameComplete, onNewGame, walletAddress, isDemoMode }: ScratchCardProps) {
+export function ScratchCard({ ticketCost, onGameComplete, onNewGame, walletAddress, isDemoMode, onWalletConnect }: ScratchCardProps) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   
@@ -99,12 +100,17 @@ export function ScratchCard({ ticketCost, onGameComplete, onNewGame, walletAddre
   });
 
   const handleBuyCard = async () => {
+    // If Real Mode and no wallet, trigger wallet connection first
     if (!isDemoMode && !walletAddress) {
       toast({
-        title: "Wallet not connected",
-        description: "Please connect your wallet to buy a card.",
-        variant: "destructive",
+        title: "Wallet Connection Required",
+        description: "Please connect your wallet to play in Real Mode.",
+        className: "bg-electric-blue/20 border-electric-blue/50",
       });
+      // Trigger wallet connection
+      if (onWalletConnect) {
+        onWalletConnect();
+      }
       return;
     }
 
@@ -253,10 +259,10 @@ export function ScratchCard({ ticketCost, onGameComplete, onNewGame, walletAddre
               {!gameStarted ? (
                 <Button 
                   onClick={handleBuyCard}
-                  disabled={loading || (!isDemoMode && !walletAddress)}
+                  disabled={loading}
                   className="bg-gradient-to-r from-neon-orange to-neon-gold text-black font-black px-8 py-3 rounded-lg hover:shadow-neon-gold transition-all duration-300 hover:transform hover:scale-105"
                 >
-                  {loading ? 'PROCESSING...' : 'BUY CARD'}
+                  {loading ? 'PROCESSING...' : 'PLAY'}
                 </Button>
               ) : (
                 <Button 

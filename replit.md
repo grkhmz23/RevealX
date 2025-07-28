@@ -51,23 +51,26 @@ The application uses PostgreSQL with Drizzle ORM for data persistence:
 - **Theme**: Neon cyberpunk aesthetic with custom CSS variables
 - **Responsive**: Mobile-first design with Tailwind CSS
 - **Components**: Reusable UI components from shadcn/ui library
-- **Animations**: Custom scratch card reveal animations
+- **Scratch Interaction**: HTML5 Canvas-based real scratch mechanics requiring 60% completion
+- **Mode Toggle**: Visual indicators for Demo (🟢) vs Real (🟣) modes
+- **Progressive UX**: Cards always visible, wallet connection only when needed
 
 ## Data Flow
 
-1. **User Connection**: User connects Solana wallet through wallet adapter
-2. **Ticket Selection**: User selects scratch card tier and confirms purchase
-3. **Payment Processing**: 
-   - Transaction created splitting payment between team and pool wallets
-   - User signs transaction with their wallet
-   - Transaction broadcasted to Solana network
-4. **Game Play**: 
-   - Game symbols generated client-side
-   - Win/loss determination and multiplier calculation
-   - Game data stored in backend
-5. **Prize Distribution**: 
-   - Winning amounts sent from pool wallet to player
-   - Game statistics updated
+### Demo Mode Flow
+1. **Mode Selection**: User selects Demo mode (default)
+2. **Ticket Selection**: User views and selects scratch card tier immediately
+3. **Game Play**: User clicks "PLAY" to generate symbols using Math.random()
+4. **Scratch Interaction**: User scratches canvas to reveal symbols (60% required)
+5. **Result Display**: Win/loss shown with demo payout simulation
+
+### Real Mode Flow  
+1. **Mode Selection**: User switches to Real mode via header toggle
+2. **Ticket Selection**: User views and selects scratch card tier immediately
+3. **Wallet Connection**: When user clicks "PLAY", wallet connection triggered if needed
+4. **Payment Processing**: Real SOL transaction with 90/10 split (pool/team)
+5. **Game Play**: Symbols generated and scratch interaction begins
+6. **Prize Distribution**: Actual SOL sent from pool wallet to winner
 
 ## External Dependencies
 
@@ -90,11 +93,13 @@ The application uses PostgreSQL with Drizzle ORM for data persistence:
 - **Drizzle Kit**: Database migration and schema management
 
 ## Recent Changes
-- **January 28, 2025**: Added full PostgreSQL database integration
-  - Migrated from in-memory storage to persistent database
-  - Implemented demo mode for wallet connection and payouts
-  - Added proper error handling for demo vs production modes
-  - All game data now persists between server restarts
+- **January 28, 2025**: Enhanced wallet connection flow and dual mode system
+  - Added PostgreSQL database integration with persistent storage
+  - Implemented dual mode toggle (Demo/Real) with localStorage persistence
+  - Added real scratch interaction with HTML5 Canvas requiring 60% completion
+  - Updated wallet connection to trigger only when needed for Real Mode purchases
+  - Always display scratch cards regardless of wallet connection status
+  - Demo mode allows immediate play without wallet requirements
 
 ## Deployment Strategy
 

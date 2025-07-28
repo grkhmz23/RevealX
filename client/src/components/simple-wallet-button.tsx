@@ -70,6 +70,7 @@ export function SimpleWalletButton({ onConnect }: SimpleWalletButtonProps) {
   return (
     <Button
       onClick={handleConnect}
+      data-wallet-button
       className="!bg-gradient-to-r !from-neon-cyan/20 !to-electric-blue/20 !border-2 !border-neon-cyan hover:!border-neon-orange !text-neon-cyan hover:!text-neon-orange !px-6 !py-2 !rounded-lg !font-bold !transition-all !duration-300 hover:!shadow-neon-orange"
     >
       Connect Wallet
