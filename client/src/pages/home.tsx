@@ -1,8 +1,10 @@
 import { useState } from 'react';
 import { SimpleWalletButton } from '@/components/simple-wallet-button';
+import { ModeToggle } from '@/components/mode-toggle';
+import { useGameMode } from '@/contexts/game-mode-context';
 import { Card, CardContent } from '@/components/ui/card';
 import { TicketSelection } from '@/components/ticket-selection';
-import { ScratchCard } from '@/components/scratch-card';
+import { ScratchCard } from '@/components/scratch-card-new';
 import { GameStats } from '@/components/game-stats';
 import { RecentWinners } from '@/components/recent-winners';
 import { GameResultModal } from '@/components/game-result-modal';
@@ -22,6 +24,7 @@ interface GameState {
 }
 
 export default function Home() {
+  const { isDemoMode, isRealMode } = useGameMode();
   const [gameState, setGameState] = useState<GameState>({
     selectedTicket: null,
     symbols: [],
@@ -81,9 +84,10 @@ export default function Home() {
             </div>
           </div>
 
-          {/* Wallet Connection */}
+          {/* Mode Toggle and Wallet Connection */}
           <div className="flex items-center space-x-4">
-            <SimpleWalletButton onConnect={handleWalletConnect} />
+            <ModeToggle />
+            {isRealMode && <SimpleWalletButton onConnect={handleWalletConnect} />}
           </div>
         </div>
       </header>
@@ -93,35 +97,52 @@ export default function Home() {
         {/* Game Stats */}
         <GameStats />
 
-        {/* Ticket Selection */}
-        {!gameState.selectedTicket && gameState.walletAddress && (
+        {/* Ticket Selection - Demo Mode */}
+        {isDemoMode && !gameState.selectedTicket && (
           <TicketSelection onTicketSelect={handleTicketSelect} />
         )}
 
-        {/* Connect Wallet Message */}
-        {!gameState.walletAddress && (
+        {/* Ticket Selection - Real Mode */}
+        {isRealMode && !gameState.selectedTicket && gameState.walletAddress && (
+          <TicketSelection onTicketSelect={handleTicketSelect} />
+        )}
+
+        {/* Connect Wallet Message - Real Mode Only */}
+        {isRealMode && !gameState.walletAddress && (
           <section className="mb-12 text-center">
-            <Card className="max-w-lg mx-auto bg-dark-purple/30 border border-neon-cyan/30 backdrop-blur-sm">
+            <Card className="max-w-lg mx-auto bg-dark-purple/30 border border-electric-blue/30 backdrop-blur-sm">
               <CardContent className="p-8">
-                <h3 className="text-2xl font-black text-neon-cyan mb-4">Welcome to Scratch 'n SOL!</h3>
-                <p className="text-gray-300 mb-6">Connect your Solana wallet to start playing our exciting scratch card game and win up to 10 SOL!</p>
-                <div className="bg-neon-orange/10 border border-neon-orange/30 rounded-lg p-4 mb-4">
-                  <p className="text-neon-orange text-sm font-bold">🎮 DEMO MODE AVAILABLE</p>
-                  <p className="text-gray-300 text-xs mt-1">Click "Connect Wallet" above to try the game in demo mode, even without a Solana wallet installed!</p>
+                <h3 className="text-2xl font-black text-electric-blue mb-4">Real Mode Active</h3>
+                <p className="text-gray-300 mb-6">Connect your Solana wallet to play with real SOL and win actual prizes!</p>
+                <div className="bg-electric-blue/10 border border-electric-blue/30 rounded-lg p-4 mb-4">
+                  <p className="text-electric-blue text-sm font-bold">🟣 REAL SOL REQUIRED</p>
+                  <p className="text-gray-300 text-xs mt-1">This mode uses actual SOL from your wallet for purchases and pays out real winnings</p>
                 </div>
-                <p className="text-neon-cyan text-sm">Click the "Connect Wallet" button above to begin</p>
+                <p className="text-electric-blue text-sm">Click the "Connect Wallet" button above to begin</p>
               </CardContent>
             </Card>
           </section>
         )}
 
-        {/* Scratch Card Game */}
-        {gameState.selectedTicket && gameState.walletAddress && (
+        {/* Scratch Card Game - Demo Mode */}
+        {isDemoMode && gameState.selectedTicket && (
+          <ScratchCard
+            ticketCost={gameState.selectedTicket}
+            onGameComplete={handleGameComplete}
+            onNewGame={handleNewGame}
+            walletAddress="demo-wallet"
+            isDemoMode={true}
+          />
+        )}
+
+        {/* Scratch Card Game - Real Mode */}
+        {isRealMode && gameState.selectedTicket && gameState.walletAddress && (
           <ScratchCard
             ticketCost={gameState.selectedTicket}
             onGameComplete={handleGameComplete}
             onNewGame={handleNewGame}
             walletAddress={gameState.walletAddress}
+            isDemoMode={false}
           />
         )}
 
