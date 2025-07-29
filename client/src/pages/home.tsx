@@ -23,9 +23,7 @@ export default function Home() {
     // Game completed, modal will handle the result display
   };
 
-  const handleWalletConnect = (publicKey: string) => {
-    setWalletAddress(publicKey);
-  };
+  // Wallet connection is now handled by WalletButton component
 
   const handleCloseModal = () => {
     setShowModal(false);

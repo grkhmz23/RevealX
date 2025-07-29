@@ -87,7 +87,7 @@ export function ScratchCardModal({
   const [transactionPending, setTransactionPending] = useState(false);
   
   // Solana wallet hooks for real mode
-  const { publicKey, connected, signTransaction } = useWallet();
+  const wallet = useWallet();
   const { connection } = useConnection();
   const { setVisible } = useWalletModal();
 
@@ -131,7 +131,7 @@ export function ScratchCardModal({
       
       if (!isDemoMode) {
         // Handle real mode - require wallet connection and process payment
-        if (!connected || !publicKey || !signTransaction) {
+        if (!wallet.connected || !wallet.publicKey || !wallet.signTransaction) {
           setVisible(true); // Open wallet modal
           toast({
             title: "Wallet Required",
@@ -145,11 +145,16 @@ export function ScratchCardModal({
         // Process real Solana transaction
         setTransactionPending(true);
         try {
-          const poolWallet = import.meta.env.VITE_POOL_WALLET || '';
-          const teamWallet = import.meta.env.VITE_TEAM_WALLET || '';
+          const poolWallet = import.meta.env.VITE_POOL_WALLET;
+          const teamWallet = import.meta.env.VITE_TEAM_WALLET;
+          
+          // Validate environment variables
+          if (!poolWallet || !teamWallet) {
+            throw new Error('Wallet addresses not configured. Please contact support.');
+          }
           
           const transactionResult = await purchaseTicket({
-            wallet: { publicKey, signTransaction, connected },
+            wallet,
             connection,
             ticketCost,
             poolWallet,
@@ -192,7 +197,7 @@ export function ScratchCardModal({
       setGameResult(null);
       
       await createGameMutation.mutateAsync({
-        playerWallet: isDemoMode ? walletAddress : publicKey!.toString(),
+        playerWallet: isDemoMode ? walletAddress : wallet.publicKey!.toString(),
         ticketType: ticketCost.toString(),
         maxWin: (ticketCost * 10).toString(),
         symbols,
@@ -247,14 +252,14 @@ export function ScratchCardModal({
     setGameResult(gameResult);
     
     // Update the game with final results
-    const currentWalletAddress = isDemoMode ? walletAddress : (publicKey?.toString() || walletAddress);
+    const currentWalletAddress = isDemoMode ? walletAddress : (wallet.publicKey?.toString() || walletAddress);
     
     // Handle payout if won
-    if (result.isWin && !isDemoMode && publicKey) {
+    if (result.isWin && !isDemoMode && wallet.publicKey) {
       try {
         await payoutMutation.mutateAsync({
           gameId: 'current_game_id', // This would need to come from game creation
-          winnerPublicKey: publicKey.toString(),
+          winnerPublicKey: wallet.publicKey.toString(),
           winAmount: winAmount,
         });
         

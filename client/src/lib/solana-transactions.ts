@@ -42,11 +42,44 @@ export async function purchaseTicket({
     // Create transaction
     const transaction = new Transaction();
 
+    // Validate wallet addresses before creating PublicKey objects
+    let poolPublicKey: PublicKey;
+    let teamPublicKey: PublicKey;
+    
+    try {
+      if (!poolWallet || poolWallet.trim() === '') {
+        throw new Error('Pool wallet address is required');
+      }
+      poolPublicKey = new PublicKey(poolWallet);
+    } catch (error) {
+      return { success: false, error: 'Invalid pool wallet address' };
+    }
+    
+    try {
+      if (!teamWallet || teamWallet.trim() === '') {
+        throw new Error('Team wallet address is required');
+      }
+      teamPublicKey = new PublicKey(teamWallet);
+    } catch (error) {
+      return { success: false, error: 'Invalid team wallet address' };
+    }
+
+    // Check user balance before proceeding
+    const userBalance = await connection.getBalance(wallet.publicKey);
+    const requiredLamports = totalLamports + 5000; // Add estimated transaction fee
+    
+    if (userBalance < requiredLamports) {
+      return { 
+        success: false, 
+        error: `Insufficient balance. Need ${(requiredLamports / LAMPORTS_PER_SOL).toFixed(4)} SOL, have ${(userBalance / LAMPORTS_PER_SOL).toFixed(4)} SOL` 
+      };
+    }
+
     // Add transfer to pool wallet (90%)
     transaction.add(
       SystemProgram.transfer({
         fromPubkey: wallet.publicKey,
-        toPubkey: new PublicKey(poolWallet),
+        toPubkey: poolPublicKey,
         lamports: poolAmount,
       })
     );
@@ -55,7 +88,7 @@ export async function purchaseTicket({
     transaction.add(
       SystemProgram.transfer({
         fromPubkey: wallet.publicKey,
-        toPubkey: new PublicKey(teamWallet),
+        toPubkey: teamPublicKey,
         lamports: teamAmount,
       })
     );
