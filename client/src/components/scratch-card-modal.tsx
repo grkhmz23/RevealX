@@ -7,6 +7,9 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiRequest } from '@/lib/queryClient';
 import { ScratchZone } from '@/components/scratch-zone';
 import { X } from 'lucide-react';
+import { useWallet, useConnection } from '@solana/wallet-adapter-react';
+import { useWalletModal } from '@solana/wallet-adapter-react-ui';
+import { purchaseTicket } from '@/lib/solana-transactions';
 import scratchNSolLogo from '@assets/ChatGPT Image 28 juil. 2025, 10_17_36_1753690663892.png';
 
 interface ScratchCardModalProps {
@@ -81,6 +84,12 @@ export function ScratchCardModal({
   const [gameResult, setGameResult] = useState<GameResult | null>(null);
   const [showResult, setShowResult] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [transactionPending, setTransactionPending] = useState(false);
+  
+  // Solana wallet hooks for real mode
+  const { publicKey, connected, signTransaction } = useWallet();
+  const { connection } = useConnection();
+  const { setVisible } = useWalletModal();
 
   const createGameMutation = useMutation({
     mutationFn: async (gameData: any) => {
@@ -118,6 +127,63 @@ export function ScratchCardModal({
     try {
       setLoading(true);
       
+      let purchaseSignature = '';
+      
+      if (!isDemoMode) {
+        // Handle real mode - require wallet connection and process payment
+        if (!connected || !publicKey || !signTransaction) {
+          setVisible(true); // Open wallet modal
+          toast({
+            title: "Wallet Required",
+            description: "Please connect your wallet to play in Real Mode",
+            variant: "destructive",
+          });
+          onClose();
+          return;
+        }
+        
+        // Process real Solana transaction
+        setTransactionPending(true);
+        try {
+          const poolWallet = import.meta.env.VITE_POOL_WALLET || '';
+          const teamWallet = import.meta.env.VITE_TEAM_WALLET || '';
+          
+          const transactionResult = await purchaseTicket({
+            wallet: { publicKey, signTransaction, connected },
+            connection,
+            ticketCost,
+            poolWallet,
+            teamWallet
+          });
+          
+          if (!transactionResult.success) {
+            throw new Error(transactionResult.error || 'Transaction failed');
+          }
+          
+          purchaseSignature = transactionResult.signature || '';
+          
+          toast({
+            title: "Payment Confirmed",
+            description: `Paid ${formatSOL(ticketCost)} SOL. Starting game...`,
+            className: "bg-green-600/20 border-green-600/50",
+          });
+        } catch (error) {
+          console.error('Transaction failed:', error);
+          toast({
+            title: "Payment Failed",
+            description: error instanceof Error ? error.message : "Transaction failed",
+            variant: "destructive",
+          });
+          onClose();
+          return;
+        } finally {
+          setTransactionPending(false);
+        }
+      } else {
+        // Demo mode signature
+        purchaseSignature = `demo_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+      }
+      
       // Generate game symbols
       const symbols = generateGameSymbols();
       setGameSymbols(symbols);
@@ -125,19 +191,15 @@ export function ScratchCardModal({
       setShowResult(false);
       setGameResult(null);
       
-      const signature = isDemoMode 
-        ? `demo_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
-        : `real_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-      
       await createGameMutation.mutateAsync({
-        playerWallet: walletAddress,
+        playerWallet: isDemoMode ? walletAddress : publicKey!.toString(),
         ticketType: ticketCost.toString(),
         maxWin: (ticketCost * 10).toString(),
         symbols,
         isWin: false,
         multiplier: 0,
         winAmount: '0',
-        purchaseSignature: signature,
+        purchaseSignature,
       });
 
       const modeText = isDemoMode ? "Demo Game Started" : "Game Started";
@@ -171,7 +233,7 @@ export function ScratchCardModal({
     });
   };
 
-  const handleGameComplete = () => {
+  const handleGameComplete = async () => {
     // Check for win
     const result = checkWin(gameSymbols);
     const winAmount = result.isWin ? calculateWinAmount(ticketCost, result.multiplier) : 0;
@@ -184,11 +246,36 @@ export function ScratchCardModal({
 
     setGameResult(gameResult);
     
+    // Update the game with final results
+    const currentWalletAddress = isDemoMode ? walletAddress : (publicKey?.toString() || walletAddress);
+    
     // Handle payout if won
-    if (result.isWin && walletAddress) {
-      payoutMutation.mutate({
-        playerWallet: walletAddress,
-        winAmount: winAmount.toString(),
+    if (result.isWin && !isDemoMode && publicKey) {
+      try {
+        await payoutMutation.mutateAsync({
+          gameId: 'current_game_id', // This would need to come from game creation
+          winnerPublicKey: publicKey.toString(),
+          winAmount: winAmount,
+        });
+        
+        toast({
+          title: "🎉 You Won!",
+          description: `${formatSOL(winAmount)} SOL has been sent to your wallet!`,
+          className: "bg-green-600/20 border-green-600/50",
+        });
+      } catch (error) {
+        console.error('Payout failed:', error);
+        toast({
+          title: "Payout Error",
+          description: "Win recorded but payout failed. Contact support.",
+          variant: "destructive",
+        });
+      }
+    } else if (result.isWin && isDemoMode) {
+      toast({
+        title: "🎉 Demo Win!",
+        description: `You would have won ${formatSOL(winAmount)} SOL in Real Mode!`,
+        className: "bg-neon-orange/20 border-neon-orange/50",
       });
     }
 

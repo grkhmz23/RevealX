@@ -90,6 +90,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Pool balance endpoint
+  app.get("/api/pool/balance", async (req, res) => {
+    try {
+      const payoutService = await import('./services/solana-payout');
+      const service = payoutService.getPayoutService();
+      const balance = await service.getPoolBalance();
+      
+      res.json({
+        balance,
+        poolWallet: service.getPoolPublicKey()
+      });
+    } catch (error) {
+      console.error("Pool balance error:", error);
+      res.status(500).json({ message: "Failed to get pool balance" });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }

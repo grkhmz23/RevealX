@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { SimpleWalletButton } from '@/components/simple-wallet-button';
+import { WalletButton } from '@/components/wallet-button';
 import { ModeToggle } from '@/components/mode-toggle';
 import { useGameMode } from '@/contexts/game-mode-context';
 import { ScratchCardGrid } from '@/components/scratch-card-grid';
@@ -51,7 +51,7 @@ export default function Home() {
           {/* Mode Toggle and Wallet Connection */}
           <div className="flex items-center space-x-4">
             <ModeToggle />
-            {!isDemoMode && <SimpleWalletButton onConnect={handleWalletConnect} />}
+            {!isDemoMode && <WalletButton />}
           </div>
         </div>
       </header>
