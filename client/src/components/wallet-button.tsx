@@ -24,9 +24,17 @@ export function WalletButton() {
         setLoading(true);
         try {
           // Use proxy RPC service for reliable balance fetching
+          console.log('🔍 WALLET BALANCE: Fetching via proxy RPC...');
           const solBalance = await proxyRPC.getBalance(publicKey);
-          console.log(`Balance fetched successfully via proxy: ${solBalance} SOL`);
-          setBalance(solBalance);
+          console.log(`✅ WALLET BALANCE: Fetched successfully via proxy: ${solBalance} SOL`);
+          
+          // Ensure balance is a valid number and set it
+          if (typeof solBalance === 'number' && !isNaN(solBalance)) {
+            setBalance(solBalance);
+          } else {
+            console.error('❌ Invalid balance received:', solBalance);
+            setBalance(0);
+          }
         } catch (error) {
           console.error(`Failed to fetch wallet balance (attempt ${retryCount + 1}):`, error);
           console.error('Error details:', {
