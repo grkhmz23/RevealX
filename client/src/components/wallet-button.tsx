@@ -6,6 +6,7 @@ import { useState, useEffect } from 'react';
 import { formatSOL } from '@/lib/utils';
 import { testWalletConnection } from '@/lib/wallet-diagnostics';
 import { ProfileDropdown } from '@/components/profile-dropdown';
+import { proxyRPC } from '@/lib/rpc-service';
 
 export function WalletButton() {
   const { publicKey, connected } = useWallet();
@@ -13,19 +14,18 @@ export function WalletButton() {
   const [balance, setBalance] = useState<number | null>(null);
   const [loading, setLoading] = useState(false);
 
-  // Fetch wallet balance when connected with retry logic and debugging
+  // Fetch wallet balance when connected using proxy RPC service
   useEffect(() => {
     const fetchBalance = async (retryCount = 0) => {
       if (connected && publicKey) {
         console.log(`Fetching balance for wallet: ${publicKey.toString()}`);
-        console.log(`Using RPC endpoint: ${connection.rpcEndpoint}`);
+        console.log(`Using proxy RPC service with multiple fallbacks`);
         
         setLoading(true);
         try {
-          // Use confirmed commitment for reliable balance fetching
-          const balanceLamports = await connection.getBalance(publicKey, 'confirmed');
-          const solBalance = balanceLamports / LAMPORTS_PER_SOL;
-          console.log(`Balance fetched successfully: ${solBalance} SOL (${balanceLamports} lamports)`);
+          // Use proxy RPC service for reliable balance fetching
+          const solBalance = await proxyRPC.getBalance(publicKey);
+          console.log(`Balance fetched successfully via proxy: ${solBalance} SOL`);
           setBalance(solBalance);
         } catch (error) {
           console.error(`Failed to fetch wallet balance (attempt ${retryCount + 1}):`, error);
@@ -33,7 +33,7 @@ export function WalletButton() {
             name: error instanceof Error ? error.name : 'Unknown',
             message: error instanceof Error ? error.message : 'Unknown error',
             publicKey: publicKey.toString(),
-            endpoint: connection.rpcEndpoint
+            service: 'proxy-rpc'
           });
           
           // Run diagnostics on first failure
@@ -67,7 +67,7 @@ export function WalletButton() {
     };
 
     fetchBalance();
-  }, [connected, publicKey, connection]);
+  }, [connected, publicKey]);
 
   if (!connected) {
     return (
