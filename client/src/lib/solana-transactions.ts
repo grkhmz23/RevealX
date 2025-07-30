@@ -31,6 +31,21 @@ export async function purchaseTicket({
   teamWallet
 }: PurchaseTicketParams): Promise<TransactionResult> {
   try {
+    console.log('🔍 INVESTIGATION: purchaseTicket called');
+    console.log('🔍 Wallet publicKey:', wallet.publicKey?.toString());
+    console.log('🔍 Connection RPC endpoint:', connection.rpcEndpoint);
+    console.log('🔍 VITE_SOLANA_RPC_URL:', import.meta.env.VITE_SOLANA_RPC_URL);
+    
+    // Manual test of connection.getLatestBlockhash()
+    console.log('🔍 INVESTIGATION: Testing manual connection.getLatestBlockhash()...');
+    try {
+      const testBlockhash = await connection.getLatestBlockhash('finalized');
+      console.log('✅ Manual blockhash test successful:', testBlockhash);
+    } catch (error) {
+      console.error('❌ Manual getLatestBlockhash() failed:', error);
+      console.error('❌ This confirms the connection object is problematic');
+    }
+    
     if (!wallet.publicKey || !wallet.sendTransaction) {
       return { success: false, error: 'Wallet not connected or does not support transactions' };
     }
@@ -70,7 +85,16 @@ export async function purchaseTicket({
     const userBalance = Math.floor(userBalanceSOL * LAMPORTS_PER_SOL);
     
     // Get current fee estimate using proxy RPC
-    const blockhashInfo = await proxyRPC.getRecentBlockhash();
+    console.log('🔍 INVESTIGATION: Fetching blockhash via proxy RPC...');
+    let blockhashInfo;
+    try {
+      blockhashInfo = await proxyRPC.getRecentBlockhash();
+      console.log('✅ Blockhash fetched via proxy:', blockhashInfo);
+    } catch (error) {
+      console.error('❌ Proxy RPC getRecentBlockhash() failed:', error);
+      throw new Error(`Failed to get recent blockhash via proxy: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    }
+    
     const estimatedFee = 10000; // Conservative estimate for 2 transfers
     const requiredLamports = totalLamports + estimatedFee;
     
@@ -100,22 +124,46 @@ export async function purchaseTicket({
     );
 
     // Get recent blockhash using proxy RPC
+    console.log('🔍 INVESTIGATION: Setting transaction blockhash...');
     const { blockhash } = blockhashInfo;
+    if (!blockhash) {
+      throw new Error('No blockhash received from proxy RPC');
+    }
     transaction.recentBlockhash = blockhash;
     transaction.feePayer = wallet.publicKey;
+    console.log('✅ Transaction blockhash set:', blockhash);
 
     // Send transaction using wallet adapter with proper error handling
-    const signature = await wallet.sendTransaction(transaction, connection, {
-      skipPreflight: false,
-      preflightCommitment: 'confirmed',
-      maxRetries: 3,
-    });
+    console.log('🔍 INVESTIGATION: Sending transaction via wallet.sendTransaction...');
+    let signature;
+    try {
+      signature = await wallet.sendTransaction(transaction, connection, {
+        skipPreflight: false,
+        preflightCommitment: 'confirmed',
+        maxRetries: 3,
+      });
+      console.log('✅ Transaction sent, signature:', signature);
+    } catch (error) {
+      console.error('❌ wallet.sendTransaction() failed:', error);
+      throw error;
+    }
     
     // Wait for confirmation with timeout and proper error handling
+    console.log('🔍 INVESTIGATION: Getting lastValidBlockHeight for confirmation...');
+    let lastValidBlockHeight;
+    try {
+      const latestBlockhash = await connection.getLatestBlockhash();
+      lastValidBlockHeight = latestBlockhash.lastValidBlockHeight;
+      console.log('✅ Got lastValidBlockHeight:', lastValidBlockHeight);
+    } catch (error) {
+      console.error('❌ connection.getLatestBlockhash() failed for confirmation:', error);
+      throw new Error(`Failed to get recent blockhash for confirmation: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    }
+    
     const confirmation = await connection.confirmTransaction({
       signature,
       blockhash,
-      lastValidBlockHeight: (await connection.getLatestBlockhash()).lastValidBlockHeight,
+      lastValidBlockHeight,
     }, 'confirmed');
     
     if (confirmation.value.err) {
