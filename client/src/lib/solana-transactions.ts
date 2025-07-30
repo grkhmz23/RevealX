@@ -7,6 +7,7 @@ import {
   SendTransactionError 
 } from '@solana/web3.js';
 import { WalletContextState } from '@solana/wallet-adapter-react';
+import { proxyRPC } from '@/lib/rpc-service';
 
 interface PurchaseTicketParams {
   wallet: WalletContextState;
@@ -64,12 +65,13 @@ export async function purchaseTicket({
       return { success: false, error: 'Invalid team wallet address' };
     }
 
-    // Check user balance before proceeding with better fee estimation
-    const userBalance = await connection.getBalance(wallet.publicKey);
+    // Check user balance before proceeding using proxy RPC
+    const userBalanceSOL = await proxyRPC.getBalance(wallet.publicKey);
+    const userBalance = Math.floor(userBalanceSOL * LAMPORTS_PER_SOL);
     
-    // Get current fee estimate (more accurate than hardcoded 5000)
-    const { feeCalculator } = await connection.getRecentBlockhash();
-    const estimatedFee = feeCalculator ? feeCalculator.lamportsPerSignature * 2 : 10000; // 2 transfers = 2 signatures
+    // Get current fee estimate using proxy RPC
+    const blockhashInfo = await proxyRPC.getRecentBlockhash();
+    const estimatedFee = 10000; // Conservative estimate for 2 transfers
     const requiredLamports = totalLamports + estimatedFee;
     
     if (userBalance < requiredLamports) {
@@ -97,8 +99,8 @@ export async function purchaseTicket({
       })
     );
 
-    // Get recent blockhash
-    const { blockhash } = await connection.getLatestBlockhash('confirmed');
+    // Get recent blockhash using proxy RPC
+    const { blockhash } = blockhashInfo;
     transaction.recentBlockhash = blockhash;
     transaction.feePayer = wallet.publicKey;
 
