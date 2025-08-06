@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { Link } from 'wouter';
 import { WalletButton } from '@/components/wallet-button';
 import { ModeToggle } from '@/components/mode-toggle';
 import { useGameMode } from '@/contexts/game-mode-context';
@@ -35,16 +36,18 @@ export default function Home() {
       {/* Header */}
       <header className="border-b border-neon-cyan/30 p-4">
         <div className="max-w-7xl mx-auto flex items-center justify-between">
-          {/* Logo */}
-          <div className="flex items-center space-x-4">
-            <div className="w-16 h-16 bg-gradient-to-br from-neon-cyan to-neon-orange rounded-lg flex items-center justify-center border-2 border-neon-cyan shadow-neon-cyan">
-              <img src={logoPath} alt="Scratch 'n SOL" className="w-12 h-12 object-contain" />
+          {/* Logo - Clickable to navigate home */}
+          <Link href="/">
+            <div className="flex items-center space-x-4 cursor-pointer hover:opacity-80 transition-opacity duration-200">
+              <div className="w-16 h-16 bg-gradient-to-br from-neon-cyan to-neon-orange rounded-lg flex items-center justify-center border-2 border-neon-cyan shadow-neon-cyan">
+                <img src={logoPath} alt="Scratch 'n SOL" className="w-12 h-12 object-contain" />
+              </div>
+              <div className="hidden sm:block">
+                <h1 className="text-2xl font-black text-neon-cyan">SCRATCH</h1>
+                <h2 className="text-xl font-bold text-neon-orange">'n SOL</h2>
+              </div>
             </div>
-            <div className="hidden sm:block">
-              <h1 className="text-2xl font-black text-neon-cyan">SCRATCH</h1>
-              <h2 className="text-xl font-bold text-neon-orange">'n SOL</h2>
-            </div>
-          </div>
+          </Link>
 
           {/* Mode Toggle and Wallet Connection */}
           <div className="flex items-center space-x-4">
