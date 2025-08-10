@@ -38,13 +38,29 @@ export default function NoCryingEscape() {
     try {
       console.log('Starting Phaser game initialization...');
       
+      // Show loading state immediately
+      if (gameContainerRef.current) {
+        gameContainerRef.current.innerHTML = `
+          <div class="flex items-center justify-center h-full">
+            <div class="text-center">
+              <div class="w-12 h-12 border-4 border-cyan-400 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+              <p class="text-cyan-400 font-bold">Loading Game...</p>
+              <p class="text-gray-400 text-sm mt-2">Initializing Phaser.js</p>
+            </div>
+          </div>
+        `;
+      }
+
+      // Small delay to show loading
+      await new Promise(resolve => setTimeout(resolve, 500));
+      
       // Dynamically import Phaser
       const Phaser = (await import('phaser')).default;
       console.log('Phaser loaded successfully');
 
-      // Clear any existing game
-      if (gameContainerRef.current.firstChild) {
-        gameContainerRef.current.removeChild(gameContainerRef.current.firstChild);
+      // Clear loading content
+      if (gameContainerRef.current) {
+        gameContainerRef.current.innerHTML = '';
       }
 
       // Create a custom scene class
@@ -65,11 +81,43 @@ export default function NoCryingEscape() {
 
         preload() {
           console.log('Preloading assets...');
+          
+          // Add loading progress
+          const progressBar = this.add.graphics();
+          const progressBox = this.add.graphics();
+          progressBox.fillStyle(0x222222, 0.8);
+          progressBox.fillRect(250, 280, 300, 50);
+
+          const loadingText = this.add.text(400, 240, 'Loading...', {
+            fontSize: '20px',
+            color: '#ffffff'
+          }).setOrigin(0.5, 0.5);
+
+          this.load.on('progress', (value: number) => {
+            console.log('Loading progress:', value);
+            progressBar.clear();
+            progressBar.fillStyle(0x00ffff, 1);
+            progressBar.fillRect(260, 290, 280 * value, 30);
+          });
+
+          this.load.on('complete', () => {
+            console.log('Asset loading complete!');
+            progressBar.destroy();
+            progressBox.destroy();
+            loadingText.destroy();
+          });
+
+          // Load assets with error handling
           this.load.image('character', '/assets/nocrying-escape/character.svg');
           this.load.image('background', '/assets/nocrying-escape/background.svg');
           this.load.image('obstacle-rug', '/assets/nocrying-escape/obstacle-rug.svg');
           this.load.image('obstacle-tear', '/assets/nocrying-escape/obstacle-tear.svg');
           this.load.image('obstacle-coin', '/assets/nocrying-escape/obstacle-coin.svg');
+
+          // Add error handling for asset loading
+          this.load.on('loaderror', (file: any) => {
+            console.error('Failed to load asset:', file.key);
+          });
         }
 
         create() {
@@ -240,6 +288,9 @@ export default function NoCryingEscape() {
       console.log('Creating Phaser game...');
       const game = new Phaser.Game(config);
       
+      // Store game reference for cleanup
+      (gameContainerRef.current as any).phaserGame = game;
+      
       console.log('Phaser game created successfully!');
       
     } catch (error: any) {
@@ -354,16 +405,9 @@ export default function NoCryingEscape() {
               {/* Game Canvas Container */}
               <div 
                 ref={gameContainerRef}
-                className="flex-1 bg-gradient-to-br from-purple-900/50 to-teal-900/50 border border-neon-cyan/30 rounded-xl min-h-[400px] flex items-center justify-center"
+                className="flex-1 bg-gradient-to-br from-purple-900/50 to-teal-900/50 border border-neon-cyan/30 rounded-xl min-h-[400px] overflow-hidden"
               >
-                <div className="text-center">
-                  <img 
-                    src="/assets/nocrying-escape/character.svg" 
-                    alt="Loading..." 
-                    className="w-20 h-20 mx-auto mb-4 animate-spin"
-                  />
-                  <p className="text-neon-cyan font-bold">Loading Game...</p>
-                </div>
+                {/* Fallback content will be replaced by Phaser */}
               </div>
             </div>
           )}
