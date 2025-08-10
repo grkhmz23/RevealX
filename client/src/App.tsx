@@ -8,12 +8,16 @@ import { GameModeProvider } from "@/contexts/game-mode-context";
 import Home from "@/pages/home";
 import NotFound from "@/pages/not-found";
 import Dashboard from "@/pages/dashboard";
+import Games from "@/pages/games";
+import NoCryingEscape from "@/pages/games/nocrying-escape";
 
 function Router() {
   return (
     <Switch>
       <Route path="/" component={Home} />
       <Route path="/dashboard" component={Dashboard} />
+      <Route path="/games" component={Games} />
+      <Route path="/games/nocrying-escape" component={NoCryingEscape} />
       <Route component={NotFound} />
     </Switch>
   );

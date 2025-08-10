@@ -35,7 +35,7 @@ export default function Home() {
     <div className="min-h-screen">
       {/* Header */}
       <header className="border-b border-neon-cyan/30 p-4">
-        <div className="max-w-7xl mx-auto flex items-center justify-between">
+        <div className="max-w-7xl mx-auto flex items-center justify-between lg:justify-start lg:space-x-8">
           {/* Logo - Clickable to navigate home */}
           <Link href="/">
             <div className="flex items-center space-x-4 cursor-pointer hover:opacity-80 transition-opacity duration-200">
@@ -49,8 +49,22 @@ export default function Home() {
             </div>
           </Link>
 
+          {/* Navigation */}
+          <nav className="hidden md:flex items-center space-x-8">
+            <Link href="/">
+              <span className="text-neon-cyan font-bold cursor-pointer">
+                Scratch Cards
+              </span>
+            </Link>
+            <Link href="/games">
+              <span className="text-gray-300 hover:text-neon-cyan transition-colors cursor-pointer font-medium">
+                Games
+              </span>
+            </Link>
+          </nav>
+
           {/* Mode Toggle and Wallet Connection */}
-          <div className="flex items-center space-x-4">
+          <div className="flex items-center space-x-4 lg:ml-auto">
             <ModeToggle />
             {!isDemoMode && <WalletButton />}
           </div>
