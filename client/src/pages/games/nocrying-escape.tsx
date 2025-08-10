@@ -35,43 +35,225 @@ export default function NoCryingEscape() {
   const initGame = async () => {
     if (!gameContainerRef.current) return;
 
-    // Dynamically import Phaser and game config
-    const Phaser = (await import('phaser')).default;
-    const { gameConfig } = await import('@/game/nocrying-escape/GameConfig');
-    const { GameScene } = await import('@/game/nocrying-escape/GameScene');
+    try {
+      console.log('Starting Phaser game initialization...');
+      
+      // Dynamically import Phaser
+      const Phaser = (await import('phaser')).default;
+      console.log('Phaser loaded successfully');
 
-    // Clear any existing game
-    if (gameContainerRef.current.firstChild) {
-      gameContainerRef.current.removeChild(gameContainerRef.current.firstChild);
-    }
-
-    // Create Phaser game
-    const config = {
-      ...gameConfig,
-      parent: gameContainerRef.current,
-    };
-
-    const game = new Phaser.Game(config);
-    
-    // Get the game scene and set up callback
-    game.scene.start('GameScene');
-    const gameScene = game.scene.getScene('GameScene') as GameScene;
-    
-    if (gameScene && gameScene.setGameEndCallback) {
-      gameScene.setGameEndCallback((finalScore: number) => {
-        endGame(finalScore);
-        game.destroy(true);
-      });
-    }
-
-    // Update score during gameplay
-    const updateScore = () => {
-      if (gameState === 'playing' && gameScene && !gameScene.sys.game.isDestroyed) {
-        // Get score from game scene if available
-        setTimeout(updateScore, 100);
+      // Clear any existing game
+      if (gameContainerRef.current.firstChild) {
+        gameContainerRef.current.removeChild(gameContainerRef.current.firstChild);
       }
-    };
-    updateScore();
+
+      // Create a custom scene class
+      class GameScene extends Phaser.Scene {
+        player!: Phaser.Physics.Arcade.Sprite;
+        obstacles!: Phaser.Physics.Arcade.Group;
+        ground!: Phaser.Physics.Arcade.StaticGroup;
+        cursors!: Phaser.Types.Input.Keyboard.CursorKeys;
+        spaceKey!: Phaser.Input.Keyboard.Key;
+        gameSpeed = 200;
+        gameScore = 0;
+        isGameOver = false;
+        scoreText!: Phaser.GameObjects.Text;
+
+        constructor() {
+          super({ key: 'GameScene' });
+        }
+
+        preload() {
+          console.log('Preloading assets...');
+          this.load.image('character', '/assets/nocrying-escape/character.svg');
+          this.load.image('background', '/assets/nocrying-escape/background.svg');
+          this.load.image('obstacle-rug', '/assets/nocrying-escape/obstacle-rug.svg');
+          this.load.image('obstacle-tear', '/assets/nocrying-escape/obstacle-tear.svg');
+          this.load.image('obstacle-coin', '/assets/nocrying-escape/obstacle-coin.svg');
+        }
+
+        create() {
+          console.log('Creating game scene...');
+          
+          // Set up background
+          const bg = this.add.image(0, 0, 'background');
+          bg.setOrigin(0, 0);
+          bg.setScale(800 / 1280, 400 / 720);
+
+          // Create ground (invisible collision)
+          this.ground = this.physics.add.staticGroup();
+          const groundY = 360;
+          for (let x = 0; x < 900; x += 100) {
+            const groundPiece = this.ground.create(x, groundY, '');
+            groundPiece.setSize(100, 40);
+            groundPiece.setVisible(false);
+          }
+
+          // Create player
+          this.player = this.physics.add.sprite(100, groundY - 60, 'character');
+          this.player.setCollideWorldBounds(true);
+          this.player.setSize(32, 48);
+          this.player.setScale(0.8);
+          this.physics.add.collider(this.player, this.ground);
+
+          // Create obstacles group
+          this.obstacles = this.physics.add.group();
+
+          // Score display
+          this.scoreText = this.add.text(20, 20, 'Score: 0s', {
+            fontSize: '24px',
+            color: '#00FFFF',
+            fontStyle: 'bold'
+          });
+
+          // Instructions
+          this.add.text(400, 50, 'PRESS SPACE OR CLICK TO JUMP', {
+            fontSize: '16px',
+            color: '#FF6B35',
+            fontStyle: 'bold'
+          }).setOrigin(0.5);
+
+          // Input handling
+          this.cursors = this.input.keyboard!.createCursorKeys();
+          this.spaceKey = this.input.keyboard!.addKey(Phaser.Input.Keyboard.KeyCodes.SPACE);
+          
+          // Touch/click input
+          this.input.on('pointerdown', () => {
+            this.jump();
+          });
+
+          // Start game loop
+          this.startGameLoop();
+
+          console.log('Game scene created successfully!');
+        }
+
+        update() {
+          if (this.isGameOver) return;
+
+          // Jump input
+          if (Phaser.Input.Keyboard.JustDown(this.spaceKey) || 
+              Phaser.Input.Keyboard.JustDown(this.cursors.up!)) {
+            this.jump();
+          }
+        }
+
+        jump() {
+          if (!this.isGameOver && this.player.body && this.player.body.touching.down) {
+            this.player.setVelocityY(-400);
+          }
+        }
+
+        startGameLoop() {
+          // Score timer
+          this.time.addEvent({
+            delay: 100,
+            callback: () => {
+              if (!this.isGameOver) {
+                this.gameScore += 0.1;
+                this.scoreText.setText(`Score: ${Math.floor(this.gameScore)}s`);
+                setScore(Math.floor(this.gameScore));
+                
+                // Increase difficulty every 10 seconds
+                if (Math.floor(this.gameScore) % 10 === 0 && this.gameScore % 1 < 0.1) {
+                  this.gameSpeed += 20;
+                }
+              }
+            },
+            loop: true
+          });
+
+          // Obstacle spawner
+          this.time.addEvent({
+            delay: 2000,
+            callback: this.spawnObstacle,
+            callbackScope: this,
+            loop: true
+          });
+        }
+
+        spawnObstacle() {
+          if (this.isGameOver) return;
+
+          const obstacleTypes = ['rug', 'tear', 'coin'];
+          const randomType = obstacleTypes[Math.floor(Math.random() * obstacleTypes.length)];
+          
+          const x = 850;
+          const y = 320;
+          
+          const obstacle = this.physics.add.sprite(x, y, `obstacle-${randomType}`);
+          obstacle.setVelocityX(-this.gameSpeed);
+          obstacle.setSize(40, 40);
+          obstacle.setScale(0.6);
+          
+          this.obstacles.add(obstacle);
+
+          // Collision with player
+          this.physics.add.overlap(this.player, obstacle, () => {
+            if (!this.isGameOver) {
+              this.isGameOver = true;
+              this.player.setVelocity(0, 0);
+              this.player.setTint(0xff0000);
+              
+              this.add.text(400, 200, 'GAME OVER', {
+                fontSize: '48px',
+                color: '#FF0000',
+                fontStyle: 'bold'
+              }).setOrigin(0.5);
+
+              this.time.delayedCall(2000, () => {
+                endGame(Math.floor(this.gameScore));
+              });
+            }
+          });
+
+          // Clean up off-screen obstacles
+          this.time.delayedCall(5000, () => {
+            if (obstacle && obstacle.active) {
+              obstacle.destroy();
+            }
+          });
+        }
+      }
+
+      // Game configuration
+      const config: Phaser.Types.Core.GameConfig = {
+        type: Phaser.AUTO,
+        width: 800,
+        height: 400,
+        backgroundColor: '#0f0f23',
+        parent: gameContainerRef.current,
+        physics: {
+          default: 'arcade',
+          arcade: {
+            gravity: { y: 800, x: 0 },
+            debug: false
+          }
+        },
+        scene: GameScene,
+        scale: {
+          mode: Phaser.Scale.FIT,
+          autoCenter: Phaser.Scale.CENTER_BOTH
+        }
+      };
+
+      console.log('Creating Phaser game...');
+      const game = new Phaser.Game(config);
+      
+      console.log('Phaser game created successfully!');
+      
+    } catch (error: any) {
+      console.error('Error initializing Phaser game:', error);
+      // Fallback to simple message
+      if (gameContainerRef.current) {
+        gameContainerRef.current.innerHTML = `
+          <div class="text-center text-red-400 p-8">
+            <p>Game failed to load: ${error?.message || 'Unknown error'}</p>
+            <p class="text-sm mt-2">Check console for details</p>
+          </div>
+        `;
+      }
+    }
   };
 
   return (
@@ -172,16 +354,15 @@ export default function NoCryingEscape() {
               {/* Game Canvas Container */}
               <div 
                 ref={gameContainerRef}
-                className="flex-1 bg-gradient-to-br from-purple-900/50 to-teal-900/50 border border-neon-cyan/30 rounded-xl flex items-center justify-center min-h-[400px]"
+                className="flex-1 bg-gradient-to-br from-purple-900/50 to-teal-900/50 border border-neon-cyan/30 rounded-xl min-h-[400px] flex items-center justify-center"
               >
                 <div className="text-center">
                   <img 
                     src="/assets/nocrying-escape/character.svg" 
-                    alt="Running Character" 
-                    className="w-20 h-20 mx-auto mb-4 animate-pulse"
+                    alt="Loading..." 
+                    className="w-20 h-20 mx-auto mb-4 animate-spin"
                   />
-                  <p className="text-neon-cyan font-bold">Game Running...</p>
-                  <p className="text-gray-400 text-sm mt-2">Phaser game will load here</p>
+                  <p className="text-neon-cyan font-bold">Loading Game...</p>
                 </div>
               </div>
             </div>
