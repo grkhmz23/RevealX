@@ -2,55 +2,16 @@ import { Link } from 'wouter';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { WalletButton } from '@/components/wallet-button';
-import { ModeToggle } from '@/components/mode-toggle';
+import { Header } from '@/components/header';
+import { Footer } from '@/components/footer';
 import { useGameMode } from '@/contexts/game-mode-context';
-import logoPath from '@assets/ChatGPT Image 28 juil. 2025, 10_17_36_1753690663892.png';
 
 export default function Slots() {
   const { isDemoMode } = useGameMode();
 
   return (
     <div className="min-h-screen">
-      {/* Header */}
-      <header className="border-b border-neon-cyan/30 p-4">
-        <div className="max-w-7xl mx-auto flex items-center justify-between lg:justify-start lg:space-x-8">
-          <Link href="/">
-            <div className="flex items-center space-x-4 cursor-pointer hover:opacity-80 transition-opacity duration-200">
-              <div className="w-16 h-16 bg-gradient-to-br from-neon-cyan to-neon-orange rounded-lg flex items-center justify-center border-2 border-neon-cyan shadow-neon-cyan">
-                <img src={logoPath} alt="Scratch 'n SOL" className="w-12 h-12 object-contain" />
-              </div>
-              <div className="hidden sm:block">
-                <h1 className="text-2xl font-black text-neon-cyan">SCRATCH</h1>
-                <h2 className="text-xl font-bold text-neon-orange">'n SOL</h2>
-              </div>
-            </div>
-          </Link>
-
-          <nav className="hidden md:flex items-center space-x-8">
-            <Link href="/">
-              <span className="text-gray-300 hover:text-neon-cyan transition-colors cursor-pointer font-medium">
-                Scratch Cards
-              </span>
-            </Link>
-            <Link href="/casino">
-              <span className="text-gray-300 hover:text-neon-cyan transition-colors cursor-pointer font-medium">
-                Casino
-              </span>
-            </Link>
-            <Link href="/casino/slots">
-              <span className="text-neon-cyan font-bold cursor-pointer">
-                Slots
-              </span>
-            </Link>
-          </nav>
-
-          <div className="flex items-center space-x-4 lg:ml-auto">
-            <ModeToggle />
-            {!isDemoMode && <WalletButton />}
-          </div>
-        </div>
-      </header>
+      <Header />
 
       {/* Main Content */}
       <main className="max-w-7xl mx-auto px-4 py-8">
@@ -193,6 +154,8 @@ export default function Slots() {
           </Link>
         </div>
       </main>
+
+      <Footer />
     </div>
   );
 }

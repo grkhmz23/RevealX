@@ -103,6 +103,18 @@ The application uses PostgreSQL with Drizzle ORM for data persistence:
 - **Drizzle Kit**: Database migration and schema management
 
 ## Recent Changes
+- **January 29, 2025**: Complete rebranding from scratch-only to full casino website
+  - Restructured UX with casino hub as homepage (/) preserving ALL existing functionality
+  - Created centralized brand configuration in src/config/brand.ts for easy future rebranding
+  - Implemented comprehensive casino architecture with Header/Footer components
+  - Added category-based navigation: Home, Casino, Scratch & SOL, Slots, Other
+  - Created dedicated pages: /casino/scratch, /casino/slots, /casino/other
+  - Added legacy route redirects for backward compatibility
+  - Updated SEO metadata and Open Graph tags for casino focus
+  - Preserved all scratch card functionality under /casino/scratch
+  - Maintained Demo/Real mode system platform-wide
+  - Created migration documentation in Instructions.md
+
 - **January 29, 2025**: Added comprehensive Slots game with Demo and Real modes
   - Created casino hub (/casino) with organized game categories
   - Implemented Classic 3×3 Slots with 5 paylines and 88-90% RTP
