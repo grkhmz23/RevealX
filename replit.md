@@ -103,7 +103,13 @@ The application uses PostgreSQL with Drizzle ORM for data persistence:
 - **Drizzle Kit**: Database migration and schema management
 
 ## Recent Changes
-- **January 28, 2025**: Added Games section with NoCrying Escape demo game
+- **January 29, 2025**: Disabled Games section to focus on casino-style gameplay
+  - Temporarily removed Games navigation link from header
+  - Commented out all game routes in App.tsx (/games, /games/nocrying-escape, etc.)
+  - User requested focus on casino-type plays like scratch cards rather than arcade games
+  - Games section code preserved but hidden from user interface
+
+- **January 28, 2025**: Added Games section with NoCrying Escape demo game (DISABLED)
   - Implemented new `/games` route with game cards layout and demo banner
   - Created NoCrying Escape: Phaser.js-powered infinite runner game
   - Generated custom SVG assets for character, obstacles (RUG, tear, coin), and backgrounds

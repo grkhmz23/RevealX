@@ -18,10 +18,11 @@ function Router() {
     <Switch>
       <Route path="/" component={Home} />
       <Route path="/dashboard" component={Dashboard} />
-      <Route path="/games" component={Games} />
-      <Route path="/games/nocrying-escape" component={NoCryingEscape} />
-      <Route path="/games/test-phaser" component={TestPhaser} />
-      <Route path="/games/simple-runner" component={SimpleRunner} />
+      {/* Games section temporarily disabled - focusing on casino-style games */}
+      {/* <Route path="/games" component={Games} /> */}
+      {/* <Route path="/games/nocrying-escape" component={NoCryingEscape} /> */}
+      {/* <Route path="/games/test-phaser" component={TestPhaser} /> */}
+      {/* <Route path="/games/simple-runner" component={SimpleRunner} /> */}
       <Route component={NotFound} />
     </Switch>
   );
