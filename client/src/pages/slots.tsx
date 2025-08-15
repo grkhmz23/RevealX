@@ -54,22 +54,33 @@ export default function Slots() {
                 </div>
               </div>
 
-              <div className="flex space-x-2">
-                <Link href="/casino/slots/classic" className="flex-1">
+              <div className="space-y-2">
+                <div className="flex space-x-2">
+                  <Link href="/casino/slots/classic" className="flex-1">
+                    <Button 
+                      variant="outline" 
+                      className="w-full border-neon-cyan/50 text-neon-cyan hover:bg-neon-cyan/10"
+                      data-testid="button-play-demo-classic"
+                    >
+                      Play Demo
+                    </Button>
+                  </Link>
+                  <Link href="/casino/slots/classic" className="flex-1">
+                    <Button 
+                      className="w-full bg-neon-orange hover:bg-neon-orange/80"
+                      data-testid="button-play-real-classic"
+                    >
+                      Play Real
+                    </Button>
+                  </Link>
+                </div>
+                <Link href="/casino/slots/realistic" className="block">
                   <Button 
-                    variant="outline" 
-                    className="w-full border-neon-cyan/50 text-neon-cyan hover:bg-neon-cyan/10"
-                    data-testid="button-play-demo-classic"
+                    variant="outline"
+                    className="w-full border-neon-orange/50 text-neon-orange hover:bg-neon-orange/10"
+                    data-testid="button-play-realistic"
                   >
-                    Play Demo
-                  </Button>
-                </Link>
-                <Link href="/casino/slots/classic" className="flex-1">
-                  <Button 
-                    className="w-full bg-neon-orange hover:bg-neon-orange/80"
-                    data-testid="button-play-real-classic"
-                  >
-                    Play Real
+                    Play Realistic Version
                   </Button>
                 </Link>
               </div>

@@ -16,6 +16,7 @@ import CasinoHub from "@/pages/casino-hub";
 import Casino from "@/pages/casino";
 import Slots from "@/pages/slots";
 import ClassicSlots from "@/pages/slots/classic";
+import ClassicRealisticSlots from "@/pages/casino/slots/classic-realistic";
 import ScratchPage from "@/pages/casino/scratch";
 import OtherGames from "@/pages/casino/other";
 
@@ -27,6 +28,7 @@ function Router() {
       <Route path="/casino/scratch" component={ScratchPage} />
       <Route path="/casino/slots" component={Slots} />
       <Route path="/casino/slots/classic" component={ClassicSlots} />
+      <Route path="/casino/slots/realistic" component={ClassicRealisticSlots} />
       <Route path="/casino/other" component={OtherGames} />
       <Route path="/dashboard" component={Dashboard} />
       
