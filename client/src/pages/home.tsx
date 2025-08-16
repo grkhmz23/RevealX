@@ -49,14 +49,7 @@ export default function Home() {
             </div>
           </Link>
 
-          {/* Navigation - Pure Casino Focus */}
-          <nav className="hidden md:flex items-center space-x-8">
-            <Link href="/">
-              <span className="text-neon-cyan font-bold cursor-pointer">
-                Scratch Cards
-              </span>
-            </Link>
-          </nav>
+          {/* No navigation needed - pure scratch card platform */}
 
           {/* Mode Toggle and Wallet Connection */}
           <div className="flex items-center space-x-4 lg:ml-auto">

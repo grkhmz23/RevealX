@@ -103,7 +103,8 @@ The application uses PostgreSQL with Drizzle ORM for data persistence:
 - **January 29, 2025**: Complete removal of Games section - Pure casino platform
   - Completely deleted all game-related files and directories (client/src/pages/games, client/src/game)
   - Removed Phaser.js dependency and all arcade game assets
-  - Cleaned up navigation to focus purely on scratch cards
+  - Removed "Scratch Cards" navigation link since platform is exclusively scratch cards
+  - Cleaned header to minimal logo and wallet controls only
   - Updated project description to reflect casino-only focus
   - Platform now exclusively dedicated to Solana-based scratch card gambling
 
