@@ -29,6 +29,17 @@ interface GameResult {
   winAmount: number;
 }
 
+interface WinCalculation {
+  canWin: boolean;
+  baseWinRate: number;
+  adjustedWinRate: number;
+  maxPayout: number;
+  symbols: string[];
+  multiplier: number;
+  winAmount: number;
+  reason?: string;
+}
+
 const getCardDesign = (ticketCost: number) => {
   const designs = {
     0.1: {
@@ -109,6 +120,7 @@ export function ScratchCardModal({
   const [loading, setLoading] = useState(false);
   const [transactionPending, setTransactionPending] = useState(false);
   const [autoRevealAll, setAutoRevealAll] = useState(false);
+  const [initialGameOutcome, setInitialGameOutcome] = useState<WinCalculation | null>(null);
   
   // Solana wallet hooks for real mode
   const wallet = useWallet();
@@ -235,6 +247,7 @@ export function ScratchCardModal({
       const gameOutcome = casinoEngine.calculateWin(ticketCost, currentPoolBalance);
       
       setGameSymbols(gameOutcome.symbols);
+      setInitialGameOutcome(gameOutcome); // Store the initial outcome
       setRevealedZones([false, false, false]);
       setShowResult(false);
       setGameResult(null);
@@ -290,13 +303,14 @@ export function ScratchCardModal({
   };
 
   const handleGameComplete = async () => {
-    // Get fresh pool balance for final win calculation
-    const statsResponse = await apiRequest('GET', '/api/stats');
-    const stats = await statsResponse.json();
-    const currentPoolBalance = parseFloat((stats as any)?.totalPool || '0');
+    // Use the initial game outcome - don't recalculate!
+    // This ensures symbols match the win/loss determination
+    if (!initialGameOutcome) {
+      console.error('No initial game outcome found');
+      return;
+    }
     
-    // Recalculate with current pool balance to ensure consistency
-    const finalOutcome = casinoEngine.calculateWin(ticketCost, currentPoolBalance);
+    const finalOutcome = initialGameOutcome;
     const winAmount = finalOutcome.canWin ? finalOutcome.winAmount : 0;
     
     const gameResult = {
@@ -403,6 +417,7 @@ export function ScratchCardModal({
     setShowResult(false);
     setGameResult(null);
     setAutoRevealAll(false);
+    setInitialGameOutcome(null);
     initializeGame();
   };
 
@@ -412,6 +427,7 @@ export function ScratchCardModal({
     setShowResult(false);
     setGameResult(null);
     setAutoRevealAll(false);
+    setInitialGameOutcome(null);
     onClose();
   };
 

@@ -100,6 +100,20 @@ The application uses PostgreSQL with Drizzle ORM for data persistence:
 - **Drizzle Kit**: Database migration and schema management
 
 ## Recent Changes
+- **October 10, 2025**: Critical bug fix for symbol matching win/loss determination
+  - Fixed issue where matching symbols incorrectly showed as losses
+  - Root cause: Game was calculating outcome twice (once for symbols at init, once for win/loss at completion)
+  - Solution: Store initial casino engine calculation and reuse consistently throughout game lifecycle
+  - Added proper TypeScript typing with WinCalculation interface for game outcomes
+  - Modified client/src/components/scratch-card-modal.tsx to use single outcome calculation
+  - Ensures displayed symbols always match the actual win/loss result
+
+- **October 10, 2025**: Added social media and contract information
+  - Added X/Twitter link (https://x.com/scratchnsol) to header with neon-styled icon
+  - Added contract address banner with click-to-copy functionality
+  - Contract address: 1DYk4M9fcDDFm8oXzyxxHrvg3gAFcAvnfuZrhF2qKXZ
+  - Implements toast notifications for copy success/failure feedback
+
 - **January 29, 2025**: Implemented sophisticated casino engine with house edge protection
   - Added dynamic win rates that adjust based on pool balance (25% base rate down to 15% for higher tiers)
   - Implemented 10% house edge to ensure long-term profitability
