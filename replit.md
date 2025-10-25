@@ -108,11 +108,10 @@ The application uses PostgreSQL with Drizzle ORM for data persistence:
   - Modified client/src/components/scratch-card-modal.tsx to use single outcome calculation
   - Ensures displayed symbols always match the actual win/loss result
 
-- **October 10, 2025**: Added social media and contract information
+- **October 10, 2025**: Added social media and token launch banner
   - Added X/Twitter link (https://x.com/scratchnsol) to header with neon-styled icon
-  - Added contract address banner with click-to-copy functionality
-  - Contract address: 1DYk4M9fcDDFm8oXzyxxHrvg3gAFcAvnfuZrhF2qKXZ
-  - Implements toast notifications for copy success/failure feedback
+  - Added "Launching Soon" banner below header with neon-cyan pulse animation
+  - Banner prepared for future token contract address update
 
 - **January 29, 2025**: Implemented sophisticated casino engine with house edge protection
   - Added dynamic win rates that adjust based on pool balance (25% base rate down to 15% for higher tiers)
