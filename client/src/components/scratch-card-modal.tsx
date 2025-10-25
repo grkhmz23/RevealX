@@ -121,6 +121,7 @@ export function ScratchCardModal({
   const [transactionPending, setTransactionPending] = useState(false);
   const [autoRevealAll, setAutoRevealAll] = useState(false);
   const [initialGameOutcome, setInitialGameOutcome] = useState<WinCalculation | null>(null);
+  const [createdGameId, setCreatedGameId] = useState<string | null>(null);
   
   // Solana wallet hooks for real mode
   const wallet = useWallet();
@@ -254,7 +255,7 @@ export function ScratchCardModal({
       
       // Only save to database for real games, not demo games
       if (!isDemoMode) {
-        await createGameMutation.mutateAsync({
+        const createdGame = await createGameMutation.mutateAsync({
           playerWallet: wallet.publicKey!.toString(),
           ticketType: ticketCost.toString(),
           maxWin: gameOutcome.maxPayout.toString(),
@@ -264,6 +265,11 @@ export function ScratchCardModal({
           winAmount: gameOutcome.winAmount.toString(),
           purchaseSignature,
         });
+        
+        // Store the game ID for later payout reference
+        if (createdGame && createdGame.id) {
+          setCreatedGameId(createdGame.id);
+        }
       }
 
       const modeText = isDemoMode ? "Demo Game Started" : "Game Started";
@@ -360,7 +366,7 @@ export function ScratchCardModal({
         const payoutResult = await payoutMutation.mutateAsync({
           playerWallet: wallet.publicKey.toString(),
           winAmount: winAmount.toString(),
-          ticketCost: ticketCost.toString()
+          gameId: createdGameId // Pass game ID so payout signature can be saved
         });
         
         console.log('✅ Payout successful:', payoutResult);
@@ -418,6 +424,7 @@ export function ScratchCardModal({
     setGameResult(null);
     setAutoRevealAll(false);
     setInitialGameOutcome(null);
+    setCreatedGameId(null);
     initializeGame();
   };
 
@@ -428,6 +435,7 @@ export function ScratchCardModal({
     setGameResult(null);
     setAutoRevealAll(false);
     setInitialGameOutcome(null);
+    setCreatedGameId(null);
     onClose();
   };
 

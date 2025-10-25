@@ -8,11 +8,20 @@ import { casinoEngine } from "./services/casino-engine";
 const solanaService = new SolanaService();
 
 export async function registerRoutes(app: Express): Promise<Server> {
-  // Get game statistics
+  // Get game statistics with real blockchain pool balance
   app.get("/api/stats", async (req, res) => {
     try {
       const stats = await storage.getStats();
-      res.json(stats || { totalPool: "0", totalWins: 0, lastWinAmount: "0" });
+      
+      // Get real pool balance from blockchain wallet
+      const poolBalance = await solanaService.getPoolBalance();
+      
+      res.json({
+        totalPool: poolBalance.toString(),
+        totalWins: stats?.totalWins || 0,
+        lastWinAmount: stats?.lastWinAmount || "0",
+        poolWallet: solanaService.getPoolWalletAddress(),
+      });
     } catch (error) {
       console.error("Error fetching stats:", error);
       res.status(500).json({ message: "Failed to fetch statistics" });
@@ -108,10 +117,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Process payout for winning game
   app.post("/api/games/payout", async (req, res) => {
     try {
-      const { playerWallet, winAmount, ticketCost } = req.body;
+      const { playerWallet, winAmount, gameId } = req.body;
       
-      if (!playerWallet || !winAmount || !ticketCost) {
+      if (!playerWallet || !winAmount) {
         return res.status(400).json({ message: "Missing required fields" });
+      }
+
+      // Verify this is not a demo wallet
+      if (playerWallet.startsWith('demo') || playerWallet.startsWith('Demo')) {
+        // Demo mode - simulate payout
+        const demoSignature = `demo_payout_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+        return res.json({ success: true, signature: demoSignature, demo: true });
       }
 
       // Send payout using pool wallet
@@ -121,16 +137,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
       );
 
       if (payoutSignature) {
-        // Update stats
+        // Update win statistics only (pool balance is on blockchain)
         const currentStats = await storage.getStats();
-        const currentPool = parseFloat(currentStats?.totalPool || "0");
         const currentWins = currentStats?.totalWins || 0;
         
         await storage.updateStats({
-          totalPool: Math.max(0, currentPool - parseFloat(winAmount)).toString(),
           totalWins: currentWins + 1,
           lastWinAmount: winAmount,
         });
+
+        // Save payout signature to game record if gameId provided
+        if (gameId) {
+          await storage.updateGamePayout(gameId, payoutSignature);
+        }
 
         res.json({ success: true, signature: payoutSignature });
       } else {
@@ -142,7 +161,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Check if pool can support a game
+  // Check if pool can support a game - uses real blockchain balance
   app.post("/api/pool/check", async (req, res) => {
     try {
       const { ticketCost } = req.body;
@@ -154,9 +173,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
 
-      // Get current pool balance
-      const stats = await storage.getStats();
-      const poolBalance = parseFloat(stats?.totalPool || '0');
+      // Get real pool balance from blockchain wallet
+      const poolBalance = await solanaService.getPoolBalance();
       
       // Check if game can be played
       const gameResult = casinoEngine.calculateWin(ticketCost, poolBalance);

@@ -32,15 +32,8 @@ export class DatabaseStorage implements IStorage {
     
     const [game] = await db.insert(games).values(gameData).returning();
     
-    // Update pool if it's a purchase
-    if (insertGame.purchaseSignature) {
-      const poolIncrease = parseFloat(insertGame.ticketType) * 0.9; // 90% goes to pool
-      const currentStats = await this.getStats();
-      const currentPool = parseFloat(currentStats?.totalPool || "0");
-      await this.updateStats({ 
-        totalPool: (currentPool + poolIncrease).toString(),
-      });
-    }
+    // Pool balance is now tracked directly on blockchain wallet
+    // Database only stores game metadata
     
     return game;
   }
