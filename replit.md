@@ -100,6 +100,16 @@ The application uses PostgreSQL with Drizzle ORM for data persistence:
 - **Drizzle Kit**: Database migration and schema management
 
 ## Recent Changes
+- **October 25, 2025**: Complete financial system overhaul - Fixed 6 critical pool management bugs
+  - Removed all database pool balance tracking - blockchain wallet is now single source of truth
+  - Pool balance retrieved in real-time from blockchain via `solanaService.getPoolBalance()`
+  - Casino engine now uses real blockchain balance for all win calculations and payout limits
+  - Demo mode completely isolated - demo games never affect real pool or statistics
+  - Payout signatures now properly saved to game records for complete audit trail
+  - GameId tracking added throughout the flow (frontend → backend → database)
+  - Eliminated race conditions and sync issues by using blockchain as atomic data source
+  - Architecture now follows "blockchain = pool, database = history" pattern
+
 - **October 10, 2025**: Critical bug fix for symbol matching win/loss determination
   - Fixed issue where matching symbols incorrectly showed as losses
   - Root cause: Game was calculating outcome twice (once for symbols at init, once for win/loss at completion)
