@@ -240,9 +240,17 @@ export function ScratchCardModal({
       }
       
       // Get current pool balance for casino logic
-      const statsResponse = await apiRequest('GET', '/api/stats');
-      const stats = await statsResponse.json();
-      const currentPoolBalance = parseFloat((stats as any)?.totalPool || '0');
+      let currentPoolBalance = 0;
+      
+      if (isDemoMode) {
+        // For demo mode, use a fake high pool balance so games work normally
+        currentPoolBalance = 100; // 100 SOL fake pool for demo
+      } else {
+        // For real mode, get actual blockchain pool balance
+        const statsResponse = await apiRequest('GET', '/api/stats');
+        const stats = await statsResponse.json();
+        currentPoolBalance = parseFloat((stats as any)?.totalPool || '0');
+      }
       
       // Use casino engine to determine game outcome
       const gameOutcome = casinoEngine.calculateWin(ticketCost, currentPoolBalance);
