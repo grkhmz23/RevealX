@@ -10,6 +10,7 @@ import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
 import { apiRequest } from '@/lib/queryClient';
 import { deriveAta, buildTransferCheckedIx, TOKEN_PROGRAM_ID, TOKEN_2022_PROGRAM_ID } from '@/lib/token-transfer';
+import { X, HelpCircle } from 'lucide-react';
 
 type JackpotStatus = {
   mint: string;
@@ -32,9 +33,171 @@ function formatInt(n: number): string {
 }
 
 function formatMaybePrice(solPerToken?: number | null): string {
-  if (!solPerToken || !Number.isFinite(solPerToken)) return '—';
+  if (!solPerToken || !Number.isFinite(solPerToken)) return '---';
   if (solPerToken < 0.000001) return solPerToken.toExponential(2) + ' SOL';
   return solPerToken.toFixed(8) + ' SOL';
+}
+
+// How It Works Modal Component
+function HowItWorksModal({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) {
+  if (!isOpen) return null;
+
+  return (
+    <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+      <div className="bg-gradient-to-br from-dark-purple to-deep-space border-2 border-neon-cyan rounded-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+        {/* Header */}
+        <div className="sticky top-0 bg-dark-purple/95 backdrop-blur-sm border-b border-neon-cyan/30 p-6 flex items-center justify-between">
+          <h2 className="text-2xl font-black text-neon-cyan">How Bags Jackpot Works</h2>
+          <button
+            onClick={onClose}
+            className="w-8 h-8 bg-red-600/90 hover:bg-red-600 text-white rounded-full flex items-center justify-center transition-all duration-200"
+          >
+            <X className="w-5 h-5" />
+          </button>
+        </div>
+
+        {/* Content */}
+        <div className="p-6 space-y-6 text-gray-300">
+          {/* Overview */}
+          <section>
+            <h3 className="text-xl font-bold text-white mb-3">Overview</h3>
+            <p className="leading-relaxed">
+              Bags Jackpot is a token-gated lottery system where users purchase tickets using the Scratch token. 
+              All purchases are verified on-chain to ensure transparency and fairness. The jackpot pool grows 
+              with each ticket purchase, and the total pool size is displayed in real-time based on the treasury 
+              token account balance.
+            </p>
+          </section>
+
+          {/* How to Participate */}
+          <section>
+            <h3 className="text-xl font-bold text-white mb-3">How to Participate</h3>
+            <div className="space-y-3">
+              <div>
+                <h4 className="font-bold text-neon-gold mb-1">1. Acquire Scratch Tokens</h4>
+                <p className="leading-relaxed">
+                  You must hold Scratch tokens to participate. Tokens can be purchased on Bags.fm after the official launch.
+                </p>
+              </div>
+              <div>
+                <h4 className="font-bold text-neon-gold mb-1">2. Connect Your Wallet</h4>
+                <p className="leading-relaxed">
+                  Connect a Solana wallet that contains Scratch tokens. Supported wallets include Phantom, Solflare, 
+                  and other Solana-compatible wallets.
+                </p>
+              </div>
+              <div>
+                <h4 className="font-bold text-neon-gold mb-1">3. Purchase Tickets</h4>
+                <p className="leading-relaxed">
+                  Select the number of tickets you wish to purchase (1-1000). Each ticket costs a fixed amount of 
+                  Scratch tokens as displayed on the page. Approve the transaction in your wallet to complete the purchase.
+                </p>
+              </div>
+              <div>
+                <h4 className="font-bold text-neon-gold mb-1">4. Verification</h4>
+                <p className="leading-relaxed">
+                  The system verifies your transaction on the Solana blockchain. Once confirmed, your tickets are 
+                  recorded in the database and your ticket count is updated.
+                </p>
+              </div>
+            </div>
+          </section>
+
+          {/* Transaction Verification */}
+          <section>
+            <h3 className="text-xl font-bold text-white mb-3">Transaction Verification</h3>
+            <p className="leading-relaxed mb-3">
+              Every ticket purchase is verified through the following process:
+            </p>
+            <ul className="space-y-2 list-disc list-inside">
+              <li>Transaction signature must exist on the Solana blockchain</li>
+              <li>Wallet address must be the transaction signer</li>
+              <li>Transfer must be directed to the official treasury token account</li>
+              <li>Token amount must match the exact ticket price multiplied by quantity</li>
+              <li>Each transaction signature can only be used once to prevent duplicate entries</li>
+            </ul>
+          </section>
+
+          {/* Jackpot Pool */}
+          <section>
+            <h3 className="text-xl font-bold text-white mb-3">Jackpot Pool</h3>
+            <p className="leading-relaxed mb-3">
+              The jackpot pool represents the total value of Scratch tokens held in the treasury account. 
+              The pool grows with each ticket purchase and is displayed in real-time on the page. The current 
+              pool balance is retrieved directly from the blockchain to ensure accuracy and transparency.
+            </p>
+          </section>
+
+          {/* Ticket Pricing */}
+          <section>
+            <h3 className="text-xl font-bold text-white mb-3">Ticket Pricing</h3>
+            <p className="leading-relaxed">
+              Ticket prices are fixed and denominated in Scratch tokens. The exact price per ticket is displayed 
+              on the page. An optional price quote in SOL is shown when available through the Bags.fm API, providing 
+              an indicative conversion rate for reference purposes.
+            </p>
+          </section>
+
+          {/* Your Tickets */}
+          <section>
+            <h3 className="text-xl font-bold text-white mb-3">Your Tickets</h3>
+            <p className="leading-relaxed">
+              Your total ticket count is displayed in the status panel. This number represents all tickets you have 
+              purchased across all transactions. Ticket data is stored securely and associated with your wallet address.
+            </p>
+          </section>
+
+          {/* Future Features */}
+          <section>
+            <h3 className="text-xl font-bold text-white mb-3">Upcoming Features</h3>
+            <p className="leading-relaxed mb-3">
+              The following features are planned for future releases:
+            </p>
+            <ul className="space-y-2 list-disc list-inside">
+              <li>Scheduled daily or weekly jackpot draws</li>
+              <li>Provably fair winner selection using commit-reveal randomness</li>
+              <li>Automatic token payouts to winning wallet addresses</li>
+              <li>Multiple jackpot tiers with varying prize pools</li>
+              <li>Historical winner tracking and leaderboard</li>
+            </ul>
+          </section>
+
+          {/* Important Notes */}
+          <section>
+            <h3 className="text-xl font-bold text-white mb-3">Important Notes</h3>
+            <ul className="space-y-2 list-disc list-inside">
+              <li>All transactions are final and cannot be reversed</li>
+              <li>You must have sufficient Scratch tokens and SOL for transaction fees</li>
+              <li>Token transfers must be exact multiples of the ticket price</li>
+              <li>Your wallet must have an associated token account for the Scratch token</li>
+              <li>Transaction verification may take a few seconds depending on network conditions</li>
+              <li>Keep your transaction signatures for record-keeping purposes</li>
+            </ul>
+          </section>
+
+          {/* Support */}
+          <section>
+            <h3 className="text-xl font-bold text-white mb-3">Support</h3>
+            <p className="leading-relaxed">
+              If you encounter any issues with ticket purchases or have questions about the jackpot system, 
+              please contact support through the official Scratch and Sol channels. Provide your wallet address 
+              and transaction signature for assistance with specific transactions.
+            </p>
+          </section>
+        </div>
+
+        {/* Footer */}
+        <div className="sticky bottom-0 bg-dark-purple/95 backdrop-blur-sm border-t border-neon-cyan/30 p-6">
+          <Button
+            onClick={onClose}
+            className="w-full bg-gradient-to-r from-neon-cyan to-electric-blue text-black font-bold"
+          >
+            Got It
+          </Button>
+        </div>
+      </div>
+    </div>
+  );
 }
 
 export default function BagsJackpotPage() {
@@ -46,6 +209,7 @@ export default function BagsJackpotPage() {
   const wallet = publicKey?.toBase58() || '';
 
   const [ticketCount, setTicketCount] = useState<number>(1);
+  const [showHowItWorks, setShowHowItWorks] = useState(false);
 
   const statusQuery = useQuery<JackpotStatus>({
     queryKey: ['/api/jackpot/status'],
@@ -159,7 +323,7 @@ export default function BagsJackpotPage() {
     onSuccess: (res) => {
       toast({
         title: 'Tickets purchased',
-        description: `Recorded purchase. Tx: ${res.signature.slice(0, 8)}…`,
+        description: `Recorded purchase. Tx: ${res.signature.slice(0, 8)}...`,
         className: 'bg-neon-cyan/20 border-neon-cyan/50',
       });
 
@@ -183,10 +347,19 @@ export default function BagsJackpotPage() {
       <header className="px-6 py-6 max-w-6xl mx-auto flex items-center justify-between">
         <div className="flex items-center gap-4">
           <Link href="/">
-            <a className="text-neon-cyan hover:text-neon-orange font-bold">← Back</a>
+            <a className="text-neon-cyan hover:text-neon-orange font-bold">Back</a>
           </Link>
           <h1 className="text-2xl font-black text-white">Bags Jackpot</h1>
         </div>
+
+        {/* How It Works Button */}
+        <Button
+          onClick={() => setShowHowItWorks(true)}
+          className="bg-neon-cyan/20 hover:bg-neon-cyan/30 border border-neon-cyan/50 text-neon-cyan font-bold flex items-center gap-2"
+        >
+          <HelpCircle className="w-4 h-4" />
+          How It Works
+        </Button>
       </header>
 
       <main className="px-6 pb-16 max-w-6xl mx-auto">
@@ -204,7 +377,7 @@ export default function BagsJackpotPage() {
                   <div className="bg-dark-purple/40 border border-neon-orange/40 rounded-lg p-4">
                     <div className="text-xs text-gray-400">Ticket price</div>
                     <div className="text-lg font-black text-neon-gold">
-                      {st ? `${formatInt(st.ticketPriceTokens)} tokens` : 'Loading…'}
+                      {st ? `${formatInt(st.ticketPriceTokens)} tokens` : 'Loading...'}
                     </div>
                   </div>
 
@@ -214,21 +387,21 @@ export default function BagsJackpotPage() {
                       {formatMaybePrice(bagsQuoteQuery.data?.solPerToken ?? null)}
                     </div>
                     <div className="text-[11px] text-gray-500 mt-1">
-                      If BAGS_API_KEY is not configured, this shows —.
+                      If BAGS_API_KEY is not configured, this shows ---.
                     </div>
                   </div>
 
                   <div className="bg-dark-purple/40 border border-neon-cyan/40 rounded-lg p-4">
                     <div className="text-xs text-gray-400">Jackpot pool (treasury balance)</div>
                     <div className="text-lg font-black text-neon-cyan">
-                      {st ? `${formatInt(Math.floor(st.treasuryBalanceTokens))} tokens` : 'Loading…'}
+                      {st ? `${formatInt(Math.floor(st.treasuryBalanceTokens))} tokens` : 'Loading...'}
                     </div>
                   </div>
 
                   <div className="bg-dark-purple/40 border border-neon-cyan/40 rounded-lg p-4">
                     <div className="text-xs text-gray-400">Tickets sold</div>
                     <div className="text-lg font-black text-neon-cyan">
-                      {st ? formatInt(st.ticketsSold) : 'Loading…'}
+                      {st ? formatInt(st.ticketsSold) : 'Loading...'}
                     </div>
                   </div>
                 </div>
@@ -256,7 +429,7 @@ export default function BagsJackpotPage() {
                     <div className="flex-1">
                       <label className="text-xs text-gray-400">Total cost</label>
                       <div className="mt-1 h-10 flex items-center px-3 rounded-md bg-deep-space/60 border border-neon-cyan/40 text-white font-bold">
-                        {computed && st ? `${formatInt(computed.totalTokens)} tokens` : '—'}
+                        {computed && st ? `${formatInt(computed.totalTokens)} tokens` : '---'}
                       </div>
                     </div>
 
@@ -265,7 +438,7 @@ export default function BagsJackpotPage() {
                       onClick={() => buyMutation.mutate()}
                       className="bg-gradient-to-r from-neon-orange to-neon-gold text-black font-black px-6"
                     >
-                      {buyMutation.isPending ? 'PROCESSING…' : publicKey ? 'BUY TICKETS' : 'CONNECT WALLET'}
+                      {buyMutation.isPending ? 'PROCESSING...' : publicKey ? 'BUY TICKETS' : 'CONNECT WALLET'}
                     </Button>
                   </div>
 
@@ -283,7 +456,7 @@ export default function BagsJackpotPage() {
                     <div className="flex items-center justify-between">
                       <span className="text-gray-400 text-sm">Wallet</span>
                       <span className="text-gray-200 text-sm font-mono">
-                        {wallet ? `${wallet.slice(0, 4)}…${wallet.slice(-4)}` : '—'}
+                        {wallet ? `${wallet.slice(0, 4)}...${wallet.slice(-4)}` : '---'}
                       </span>
                     </div>
 
@@ -295,12 +468,12 @@ export default function BagsJackpotPage() {
                     <div className="pt-3 border-t border-neon-cyan/20">
                       <div className="text-gray-400 text-xs mb-1">Mint</div>
                       <div className="text-gray-200 text-xs font-mono break-all">
-                        {st?.mint || 'Loading…'}
+                        {st?.mint || 'Loading...'}
                       </div>
 
                       <div className="text-gray-400 text-xs mt-3 mb-1">Treasury token account</div>
                       <div className="text-gray-200 text-xs font-mono break-all">
-                        {st?.treasuryTokenAccount || 'Loading…'}
+                        {st?.treasuryTokenAccount || 'Loading...'}
                       </div>
                     </div>
 
@@ -314,6 +487,9 @@ export default function BagsJackpotPage() {
           </CardContent>
         </Card>
       </main>
+
+      {/* How It Works Modal */}
+      <HowItWorksModal isOpen={showHowItWorks} onClose={() => setShowHowItWorks(false)} />
     </div>
   );
 }

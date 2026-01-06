@@ -53,8 +53,9 @@ export default function Home() {
           {/* Navigation */}
           <div className="hidden lg:flex items-center space-x-4 flex-1 justify-center">
             <Link href="/bags-jackpot">
-              <a className="px-6 py-2 bg-gradient-to-r from-neon-gold/20 to-neon-orange/20 hover:from-neon-gold/30 hover:to-neon-orange/30 border-2 border-neon-gold/50 hover:border-neon-gold rounded-lg font-bold text-neon-gold hover:text-white transition-all duration-200 hover:shadow-neon-gold">
-                🎰 Bags Jackpot
+              <a className="px-6 py-2 bg-gradient-to-r from-neon-gold/20 to-neon-orange/20 hover:from-neon-gold/30 hover:to-neon-orange/30 border-2 border-neon-gold/50 hover:border-neon-gold rounded-lg font-bold text-neon-gold hover:text-white transition-all duration-200 hover:shadow-neon-gold flex items-center gap-2">
+                <img src="/assets/bagsjackpotlogo.png" alt="Bags Jackpot" className="w-6 h-6 object-contain" />
+                Bags Jackpot
               </a>
             </Link>
           </div>
