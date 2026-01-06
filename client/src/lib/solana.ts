@@ -12,8 +12,10 @@ export const TEAM_WALLET = new PublicKey(
   import.meta.env.VITE_TEAM_WALLET || 'GJRSoWzLp2YXvn7JYKq5wMpZGNCPgUb7WuFNhW9F4BrL'
 );
 
+// Pool wallet - must be set via environment variable
+// Using a valid devnet address as fallback for development only
 export const POOL_WALLET = new PublicKey(
-  import.meta.env.VITE_POOL_WALLET || 'PoolWa11etAddressHereForScratchNSo1Game123456789'
+  import.meta.env.VITE_POOL_WALLET || '11111111111111111111111111111111'
 );
 
 export function solToLamports(sol: number): number {
@@ -29,7 +31,7 @@ export async function createPurchaseTransaction(
   amount: number
 ): Promise<Transaction> {
   const transaction = new Transaction();
-  
+
   const teamAmount = Math.round(amount * 0.1 * LAMPORTS_PER_SOL);
   const poolAmount = Math.round(amount * 0.9 * LAMPORTS_PER_SOL);
 

@@ -12,10 +12,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/stats", async (req, res) => {
     try {
       const stats = await storage.getStats();
-      
+
       // Get real pool balance from blockchain wallet
       const poolBalance = await solanaService.getPoolBalance();
-      
+
       res.json({
         totalPool: poolBalance.toString(),
         totalWins: stats?.totalWins || 0,
@@ -55,7 +55,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post('/api/rpc-proxy', async (req, res) => {
     try {
       const heliusKey = process.env.HELIUS_API_KEY;
-      
+
       // Priority order for RPC endpoints
       const endpoints = [
         heliusKey ? `https://rpc.helius.xyz/?api-key=${heliusKey}` : null,
@@ -65,14 +65,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       ].filter(Boolean);
 
       let lastError;
-      
+
       // Try each endpoint until one works
       for (const endpoint of endpoints) {
         if (!endpoint) continue;
-        
+
         try {
           console.log(`Trying RPC endpoint: ${endpoint.includes('api-key') ? 'https://rpc.helius.xyz/?api-key=***' : endpoint}`);
-          
+
           const response = await fetch(endpoint, {
             method: 'POST',
             headers: {
@@ -118,7 +118,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/games/payout", async (req, res) => {
     try {
       const { playerWallet, winAmount, gameId } = req.body;
-      
+
       if (!playerWallet || !winAmount) {
         return res.status(400).json({ message: "Missing required fields" });
       }
@@ -126,7 +126,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Verify this is not a demo wallet
       if (playerWallet.startsWith('demo') || playerWallet.startsWith('Demo')) {
         // Demo mode - simulate payout
-        const demoSignature = `demo_payout_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+        const demoSignature = `demo_payout_${Date.now()}_${Math.random().toString(36).substring(2, 11)}`;
         return res.json({ success: true, signature: demoSignature, demo: true });
       }
 
@@ -140,7 +140,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         // Update win statistics only (pool balance is on blockchain)
         const currentStats = await storage.getStats();
         const currentWins = currentStats?.totalWins || 0;
-        
+
         await storage.updateStats({
           totalWins: currentWins + 1,
           lastWinAmount: winAmount,
@@ -165,7 +165,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/pool/check", async (req, res) => {
     try {
       const { ticketCost } = req.body;
-      
+
       if (!ticketCost || ticketCost <= 0) {
         return res.status(400).json({ 
           error: 'Invalid ticket cost',
@@ -175,11 +175,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Get real pool balance from blockchain wallet
       const poolBalance = await solanaService.getPoolBalance();
-      
+
       // Check if game can be played
       const gameResult = casinoEngine.calculateWin(ticketCost, poolBalance);
       const isHealthy = casinoEngine.isPoolHealthy(poolBalance);
-      
+
       res.json({
         canPlay: poolBalance > casinoEngine.getMinPoolReserve() + ticketCost,
         poolBalance: poolBalance,
@@ -188,7 +188,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         isPoolHealthy: isHealthy,
         reason: gameResult.reason || null
       });
-      
+
     } catch (error) {
       console.error('Pool check failed:', error);
       res.status(500).json({ 
@@ -216,7 +216,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const payoutService = await import('./services/solana-payout');
       const service = payoutService.getPayoutService();
       const balance = await service.getPoolBalance();
-      
+
       res.json({
         balance,
         poolWallet: service.getPoolPublicKey()

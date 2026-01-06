@@ -7,11 +7,14 @@ import { randomUUID } from "crypto";
 export interface IStorage {
   // Game operations
   createGame(game: InsertGame): Promise<Game>;
+  // Back-compat alias: older routes used getGameById
+  getGameById(id: string): Promise<Game | undefined>;
   getGame(id: string): Promise<Game | undefined>;
+  getGameByPurchaseSignature(purchaseSignature: string): Promise<Game | undefined>;
   getGamesByWallet(wallet: string): Promise<Game[]>;
   getRecentWins(limit?: number): Promise<Game[]>;
   updateGamePayout(id: string, payoutSignature: string): Promise<void>;
-  
+
   // Stats operations
   getStats(): Promise<GameStats | undefined>;
   updateStats(stats: Partial<InsertGameStats>): Promise<void>;
@@ -29,17 +32,22 @@ export class DatabaseStorage implements IStorage {
       winAmount: insertGame.winAmount || "0",
       payoutSignature: insertGame.payoutSignature || null,
     };
-    
+
     const [game] = await db.insert(games).values(gameData).returning();
-    
-    // Pool balance is now tracked directly on blockchain wallet
-    // Database only stores game metadata
-    
     return game;
   }
 
   async getGame(id: string): Promise<Game | undefined> {
     const [game] = await db.select().from(games).where(eq(games.id, id));
+    return game || undefined;
+  }
+
+  async getGameById(id: string): Promise<Game | undefined> {
+    return this.getGame(id);
+  }
+
+  async getGameByPurchaseSignature(purchaseSignature: string): Promise<Game | undefined> {
+    const [game] = await db.select().from(games).where(eq(games.purchaseSignature, purchaseSignature));
     return game || undefined;
   }
 
@@ -57,10 +65,7 @@ export class DatabaseStorage implements IStorage {
   }
 
   async updateGamePayout(id: string, payoutSignature: string): Promise<void> {
-    await db
-      .update(games)
-      .set({ payoutSignature })
-      .where(eq(games.id, id));
+    await db.update(games).set({ payoutSignature }).where(eq(games.id, id));
   }
 
   async getStats(): Promise<GameStats | undefined> {
@@ -70,7 +75,7 @@ export class DatabaseStorage implements IStorage {
 
   async updateStats(updates: Partial<InsertGameStats>): Promise<void> {
     const existingStats = await this.getStats();
-    
+
     if (existingStats) {
       await db
         .update(gameStats)

@@ -1,181 +1,158 @@
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
 import { formatSOL } from '@/lib/game-logic';
-import scratchNSolLogo from '@assets/ChatGPT Image 28 juil. 2025, 10_17_36_1753690663892.png';
 
 interface ScratchCardGridProps {
-  onCardSelect: (ticketCost: number) => void;
-  isDemoMode: boolean;
+  // New name (what the file currently uses)
+  onSelectTicket?: (cost: number) => void;
+
+  // Backward-compatible name (very likely what your parent uses)
+  onSelect?: (cost: number) => void;
+
+  disabled?: boolean;
 }
 
-const ticketTypes = [0.1, 0.2, 0.5, 0.7, 1.0];
+interface CardDesign {
+  id: string;
+  name: string;
+  cost: number;
+  description: string;
+  maxWin: string;
+  gradient: string;
+  border: string;
+  glow: string;
+}
 
-const cardDesigns = [
+const cardDesigns: CardDesign[] = [
   {
+    id: 'bronze',
+    name: 'BRONZE',
     cost: 0.1,
-    name: "BRONZE",
-    gradient: "from-amber-600 via-yellow-700 to-amber-800",
-    borderColor: "border-amber-500",
-    accentColor: "text-amber-300",
-    bgPattern: "bg-gradient-to-br from-amber-900/20 to-orange-900/30",
-    shadowColor: "shadow-amber-500/20",
+    description: 'Perfect for beginners',
+    maxWin: `${formatSOL(0.1 * 10)}`,
+    gradient: 'from-amber-700/20 to-orange-600/20',
+    border: 'border-amber-500/50',
+    glow: 'shadow-amber-500/20',
   },
   {
+    id: 'silver',
+    name: 'SILVER',
     cost: 0.2,
-    name: "SILVER", 
-    gradient: "from-slate-400 via-gray-500 to-slate-600",
-    borderColor: "border-slate-400",
-    accentColor: "text-slate-300",
-    bgPattern: "bg-gradient-to-br from-slate-800/20 to-gray-800/30",
-    shadowColor: "shadow-slate-400/20",
+    description: 'Better odds, bigger wins',
+    maxWin: `${formatSOL(0.2 * 10)}`,
+    gradient: 'from-slate-400/20 to-gray-300/20',
+    border: 'border-slate-300/50',
+    glow: 'shadow-slate-300/20',
   },
   {
+    id: 'gold',
+    name: 'GOLD',
     cost: 0.5,
-    name: "GOLD",
-    gradient: "from-yellow-400 via-amber-500 to-yellow-600",
-    borderColor: "border-yellow-400",
-    accentColor: "text-yellow-200",
-    bgPattern: "bg-gradient-to-br from-yellow-900/20 to-amber-900/30",
-    shadowColor: "shadow-yellow-400/30",
+    description: 'Premium experience',
+    maxWin: `${formatSOL(0.5 * 10)}`,
+    gradient: 'from-yellow-500/20 to-amber-400/20',
+    border: 'border-yellow-400/50',
+    glow: 'shadow-yellow-400/20',
   },
   {
-    cost: 0.7,
-    name: "PLATINUM",
-    gradient: "from-indigo-400 via-purple-500 to-pink-500",
-    borderColor: "border-purple-400",
-    accentColor: "text-purple-200",
-    bgPattern: "bg-gradient-to-br from-purple-900/20 to-pink-900/30",
-    shadowColor: "shadow-purple-400/30",
+    id: 'platinum',
+    name: 'PLATINUM',
+    cost: 0.75,
+    description: 'High stakes, high rewards',
+    maxWin: `${formatSOL(0.75 * 10)}`,
+    gradient: 'from-purple-500/20 to-indigo-400/20',
+    border: 'border-purple-400/50',
+    glow: 'shadow-purple-400/20',
   },
   {
+    id: 'diamond',
+    name: 'DIAMOND',
     cost: 1.0,
-    name: "DIAMOND",
-    gradient: "from-cyan-400 via-blue-500 to-indigo-600",
-    borderColor: "border-cyan-400",
-    accentColor: "text-cyan-200",
-    bgPattern: "bg-gradient-to-br from-cyan-900/20 to-blue-900/30",
-    shadowColor: "shadow-cyan-400/40",
+    description: 'Ultimate jackpot potential',
+    maxWin: `${formatSOL(1.0 * 10)}`,
+    gradient: 'from-cyan-500/20 to-blue-400/20',
+    border: 'border-cyan-400/50',
+    glow: 'shadow-cyan-400/20',
   },
 ];
 
-export function ScratchCardGrid({ onCardSelect, isDemoMode }: ScratchCardGridProps) {
-  const [hoveredCard, setHoveredCard] = useState<number | null>(null);
+export function ScratchCardGrid({ onSelectTicket, onSelect, disabled = false }: ScratchCardGridProps) {
+  const [selectedTicket, setSelectedTicket] = useState<number | null>(null);
 
-  const handleCardClick = (ticketCost: number) => {
-    onCardSelect(ticketCost);
+  const emitSelect = (cost: number) => {
+    const cb = onSelectTicket ?? onSelect;
+    if (typeof cb !== 'function') {
+      console.error('ScratchCardGrid: missing selection callback. Pass onSelectTicket or onSelect.');
+      return;
+    }
+    cb(cost);
+  };
+
+  const handleSelectTicket = (cost: number) => {
+    if (disabled) return;
+    setSelectedTicket(cost);
+    emitSelect(cost);
   };
 
   return (
     <section className="mb-12">
       <div className="text-center mb-8">
-        <h2 className="text-4xl font-black text-neon-cyan mb-4">
-          Choose Your Card
+        <h2 className="text-4xl font-black mb-4 bg-gradient-to-r from-neon-cyan to-neon-orange bg-clip-text text-transparent">
+          CHOOSE YOUR CARD
         </h2>
-        <p className="text-gray-300 max-w-2xl mx-auto">
-          Select a scratch card to play. Higher value cards offer bigger potential winnings with multipliers up to 10x!
+        <p className="text-gray-300 text-lg">
+          Select a scratch card tier and test your luck
         </p>
-        <div className={`inline-flex items-center px-4 py-2 rounded-full mt-4 ${
-          isDemoMode 
-            ? 'bg-neon-orange/20 text-neon-orange border border-neon-orange/50' 
-            : 'bg-electric-blue/20 text-electric-blue border border-electric-blue/50'
-        }`}>
-          {isDemoMode ? '🟢 DEMO MODE ACTIVE' : '🟣 REAL MODE ACTIVE'}
-        </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-6 max-w-7xl mx-auto">
-        {cardDesigns.map((design) => (
-          <Card
-            key={design.cost}
+      <div className="grid grid-cols-1 md:grid-cols-5 gap-6 max-w-6xl mx-auto">
+        {cardDesigns.map((card) => (
+          <div
+            key={card.id}
             className={`
-              relative overflow-hidden cursor-pointer transition-all duration-300 transform
-              ${design.borderColor} ${design.shadowColor} ${design.bgPattern}
-              ${hoveredCard === design.cost ? 'scale-105 shadow-2xl' : 'hover:scale-102'}
-              bg-gradient-to-br from-dark-purple/80 to-deep-space/90 backdrop-blur-sm
-              border-2 hover:shadow-xl
+              relative bg-gradient-to-br ${card.gradient}
+              border-2 ${card.border}
+              rounded-2xl p-6 cursor-pointer
+              transition-all duration-300 hover:scale-105
+              ${card.glow} hover:shadow-lg
+              ${selectedTicket === card.cost ? 'ring-2 ring-neon-cyan shadow-neon-cyan/30' : ''}
+              ${disabled ? 'opacity-50 cursor-not-allowed' : ''}
             `}
-            onMouseEnter={() => setHoveredCard(design.cost)}
-            onMouseLeave={() => setHoveredCard(null)}
-            onClick={() => handleCardClick(design.cost)}
+            onClick={() => handleSelectTicket(card.cost)}
           >
-            <CardContent className="p-0 h-80 flex flex-col">
-              {/* Card Header */}
-              <div className="p-4 text-center">
-                <div className={`text-xs font-bold ${design.accentColor} mb-2`}>
-                  {design.name} TIER
-                </div>
-                <img 
-                  src={scratchNSolLogo} 
-                  alt="Scratch 'n SOL" 
-                  className="w-16 h-16 mx-auto mb-2 rounded-lg"
-                />
-                <div className="text-lg font-black text-white">
-                  SCRATCH 'N SOL
-                </div>
+            <div className="text-center">
+              <h3 className="text-2xl font-black mb-2 text-white">{card.name}</h3>
+              <div className="text-3xl font-black mb-3 text-neon-gold">
+                {formatSOL(card.cost)}
+              </div>
+              <p className="text-gray-300 text-sm mb-4">{card.description}</p>
+
+              <div className="bg-dark-purple/30 rounded-lg p-3 mb-4">
+                <div className="text-xs text-gray-400 mb-1">MAX WIN</div>
+                <div className="text-lg font-bold text-neon-orange">{card.maxWin}</div>
               </div>
 
-              {/* Card Body - Decorative Pattern */}
-              <div className="flex-1 relative overflow-hidden">
-                <div className={`absolute inset-0 bg-gradient-to-br ${design.gradient} opacity-10`} />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
-                
-                {/* Decorative Elements */}
-                <div className="absolute top-4 left-4 w-8 h-8 border-2 border-white/20 rounded-full" />
-                <div className="absolute top-4 right-4 w-8 h-8 border-2 border-white/20 rounded-full" />
-                <div className="absolute bottom-4 left-4 w-8 h-8 border-2 border-white/20 rounded-full" />
-                <div className="absolute bottom-4 right-4 w-8 h-8 border-2 border-white/20 rounded-full" />
-                
-                {/* Center Symbol */}
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <div className={`text-6xl font-black ${design.accentColor} opacity-30`}>
-                    ◊
-                  </div>
-                </div>
-              </div>
+              <Button
+                className={`
+                  w-full font-bold
+                  ${selectedTicket === card.cost
+                    ? 'bg-gradient-to-r from-neon-cyan to-electric-blue text-black'
+                    : 'bg-dark-purple/50 border border-white/20 text-white hover:bg-white/10'
+                  }
+                `}
+                disabled={disabled}
+              >
+                {selectedTicket === card.cost ? 'SELECTED' : 'SELECT'}
+              </Button>
+            </div>
 
-              {/* Card Footer */}
-              <div className="p-4 bg-black/40 backdrop-blur-sm">
-                <div className="text-center mb-3">
-                  <div className={`text-2xl font-black ${design.accentColor}`}>
-                    {formatSOL(design.cost)} SOL
-                  </div>
-                  <div className="text-xs text-gray-400">
-                    Max Win: {formatSOL(design.cost * 10)} SOL
-                  </div>
-                </div>
-                
-                <Button
-                  className={`
-                    w-full bg-gradient-to-r ${design.gradient} text-black font-black 
-                    py-2 rounded-lg transition-all duration-300 hover:shadow-lg
-                    ${hoveredCard === design.cost ? 'shadow-lg transform scale-105' : ''}
-                  `}
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handleCardClick(design.cost);
-                  }}
-                >
-                  PLAY
-                </Button>
+            {selectedTicket === card.cost && (
+              <div className="absolute -top-2 -right-2 bg-neon-cyan text-black rounded-full w-8 h-8 flex items-center justify-center font-black">
+                ✓
               </div>
-            </CardContent>
-          </Card>
+            )}
+          </div>
         ))}
-      </div>
-
-      {/* Additional Info */}
-      <div className="text-center mt-8">
-        <p className="text-gray-400 text-sm">
-          {isDemoMode 
-            ? "Demo mode: Play without spending real SOL. No actual winnings." 
-            : "Real mode: Spend SOL from your wallet. Win real prizes!"}
-        </p>
-        <div className="flex justify-center space-x-6 mt-4 text-xs text-gray-500">
-          <span>• Instant results</span>
-          <span>• Fair & transparent</span>
-          <span>• Multipliers: 1x, 2x, 5x, 10x</span>
-        </div>
       </div>
     </section>
   );

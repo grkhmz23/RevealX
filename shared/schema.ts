@@ -43,8 +43,8 @@ export type GameStats = typeof gameStats.$inferSelect;
 export const ticketTypes = [
   { cost: 0.1, maxWin: 1 },
   { cost: 0.2, maxWin: 2 },
-  { cost: 0.3, maxWin: 3 },
   { cost: 0.5, maxWin: 5 },
+  { cost: 0.75, maxWin: 7.5 },
   { cost: 1.0, maxWin: 10 },
 ] as const;
 

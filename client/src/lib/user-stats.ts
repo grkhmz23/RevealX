@@ -68,9 +68,9 @@ export class UserStatsManager {
   // Record a new game play
   recordGamePlay(gamePlay: Omit<GamePlay, 'id' | 'timestamp' | 'walletAddress'>): void {
     const stats = this.getStats();
-    
+
     const newGamePlay: GamePlay = {
-      id: Date.now().toString() + Math.random().toString(36).substr(2, 9),
+      id: Date.now().toString() + Math.random().toString(36).substring(2, 11),
       timestamp: Date.now(),
       walletAddress: this.walletAddress,
       ...gamePlay
@@ -79,7 +79,7 @@ export class UserStatsManager {
     // Update stats
     stats.totalCards += 1;
     stats.totalSOLInvested += gamePlay.solAmount;
-    
+
     if (gamePlay.isWin) {
       stats.wins += 1;
       if (gamePlay.prizeAmount > stats.biggestWin) {
@@ -99,7 +99,7 @@ export class UserStatsManager {
     }
 
     this.saveStats(stats);
-    
+
     console.log('Game play recorded:', newGamePlay);
     console.log('Updated stats:', stats);
   }
@@ -115,7 +115,7 @@ export class UserStatsManager {
     recentGames: GamePlay[];
   } {
     const stats = this.getStats();
-    
+
     return {
       totalCards: stats.totalCards.toString(),
       totalSOLInvested: stats.totalSOLInvested.toFixed(3),
@@ -152,11 +152,11 @@ export function formatGameDate(timestamp: number): string {
 // Get card type display name
 export function getCardTypeDisplay(cardType: string): string {
   const typeMap: Record<string, string> = {
-    'starter': 'Starter (0.1 SOL)',
-    'bronze': 'Bronze (0.25 SOL)',
-    'silver': 'Silver (0.5 SOL)',
-    'gold': 'Gold (0.75 SOL)',
-    'platinum': 'Platinum (1.0 SOL)'
+    'bronze': 'Bronze (0.1 SOL)',
+    'silver': 'Silver (0.2 SOL)',
+    'gold': 'Gold (0.5 SOL)',
+    'platinum': 'Platinum (0.75 SOL)',
+    'diamond': 'Diamond (1.0 SOL)'
   };
   return typeMap[cardType] || cardType;
 }

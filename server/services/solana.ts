@@ -19,7 +19,7 @@ export class SolanaService {
       (process.env.NODE_ENV === 'production' 
         ? 'https://api.mainnet-beta.solana.com'
         : 'https://api.devnet.solana.com');
-    
+
     this.connection = new Connection(rpcUrl, 'confirmed');
 
     // Initialize pool wallet from private key
@@ -36,7 +36,7 @@ export class SolanaService {
       } else {
         secretKey = bs58.decode(poolPrivateKey);
       }
-      
+
       this.poolWallet = Keypair.fromSecretKey(secretKey);
     } catch (error) {
       throw new Error('Invalid POOL_WALLET_PRIVATE_KEY format');
@@ -48,7 +48,7 @@ export class SolanaService {
       // Check if this is a demo wallet (starts with "Demo")
       if (playerWallet.startsWith('Demo')) {
         // Simulate successful payout for demo mode
-        const demoSignature = `demo_payout_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+        const demoSignature = `demo_payout_${Date.now()}_${Math.random().toString(36).substring(2, 11)}`;
         console.log(`Demo payout simulated: ${amountSol} SOL to ${playerWallet}, signature: ${demoSignature}`);
         return demoSignature;
       }
@@ -61,14 +61,14 @@ export class SolanaService {
       const poolBalanceSOL = poolBalance / LAMPORTS_PER_SOL;
       const requiredLamports = lamports + 5000; // 5000 lamports for transaction fee
       const requiredSOL = requiredLamports / LAMPORTS_PER_SOL;
-      
+
       console.log('💰 PAYOUT INVESTIGATION:');
       console.log(`💰 Pool wallet address: ${this.poolWallet.publicKey.toString()}`);
       console.log(`💰 Pool balance: ${poolBalanceSOL} SOL (${poolBalance} lamports)`);
       console.log(`💰 Payout amount: ${amountSol} SOL (${lamports} lamports)`);
       console.log(`💰 Required total: ${requiredSOL} SOL (${requiredLamports} lamports)`);
       console.log(`💰 Sufficient balance: ${poolBalance >= requiredLamports ? 'YES' : 'NO'}`);
-      
+
       if (poolBalance < requiredLamports) {
         console.error(`❌ INSUFFICIENT POOL BALANCE: Need ${requiredSOL} SOL, have ${poolBalanceSOL} SOL`);
         return null;

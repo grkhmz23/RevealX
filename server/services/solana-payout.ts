@@ -26,8 +26,11 @@ export class SolanaPayoutService {
   private poolWallet: Keypair;
 
   constructor() {
-    // Initialize connection (use custom RPC or default mainnet)
-    const rpcUrl = process.env.SOLANA_RPC_URL || 'https://api.mainnet-beta.solana.com';
+    // Initialize connection - use environment RPC or default based on NODE_ENV
+    const rpcUrl = process.env.SOLANA_RPC_URL || 
+      (process.env.NODE_ENV === 'production' 
+        ? 'https://api.mainnet-beta.solana.com'
+        : 'https://api.devnet.solana.com');
     this.connection = new Connection(rpcUrl, 'confirmed');
 
     // Load pool wallet from private key
@@ -39,7 +42,7 @@ export class SolanaPayoutService {
       // Decode base58 private key
       const privateKeyBytes = bs58.decode(process.env.POOL_WALLET_PRIVATE_KEY);
       this.poolWallet = Keypair.fromSecretKey(privateKeyBytes);
-      
+
       console.log('Solana payout service initialized with pool wallet:', this.poolWallet.publicKey.toString());
     } catch (error) {
       throw new Error('Invalid POOL_WALLET_PRIVATE_KEY format. Must be base58 encoded.');
@@ -60,15 +63,16 @@ export class SolanaPayoutService {
 
       // Convert SOL to lamports
       const lamports = Math.floor(winAmount * LAMPORTS_PER_SOL);
-      
+
       if (lamports <= 0) {
         return { success: false, error: 'Invalid win amount' };
       }
 
-      // Check pool wallet balance
+      // Check pool wallet balance (include transaction fee)
       const poolBalance = await this.connection.getBalance(this.poolWallet.publicKey);
-      if (poolBalance < lamports) {
-        console.error(`Insufficient pool balance: ${poolBalance} lamports, need ${lamports}`);
+      const requiredLamports = lamports + 5000; // 5000 lamports for transaction fee
+      if (poolBalance < requiredLamports) {
+        console.error(`Insufficient pool balance: ${poolBalance} lamports, need ${requiredLamports} (${lamports} + 5000 fee)`);
         return { success: false, error: 'Insufficient pool balance' };
       }
 
@@ -94,7 +98,7 @@ export class SolanaPayoutService {
 
     } catch (error) {
       console.error('Payout failed:', error);
-      
+
       let errorMessage = 'Payout transaction failed';
       if (error instanceof Error) {
         errorMessage = error.message;

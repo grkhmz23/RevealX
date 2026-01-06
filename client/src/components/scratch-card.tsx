@@ -1,11 +1,13 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
 import { generateGameSymbols, checkWin, calculateWinAmount, formatSOL } from '@/lib/game-logic';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiRequest } from '@/lib/queryClient';
-import { ScratchCanvas } from '@/components/scratch-canvas';
+import { useWallet, useConnection } from '@solana/wallet-adapter-react';
+import { useWalletModal } from '@solana/wallet-adapter-react-ui';
+import { purchaseTicket } from '@/lib/solana-transactions';
 
 interface ScratchCardProps {
   ticketCost: number;
@@ -46,12 +48,20 @@ function ScratchSlot({ symbol, isRevealed, onReveal, disabled }: ScratchSlotProp
 export function ScratchCard({ ticketCost, onGameComplete, onNewGame, walletAddress, isDemoMode }: ScratchCardProps) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  
+
+  // Solana wallet hooks for real transactions
+  const wallet = useWallet();
+  const { connection } = useConnection();
+  const { setVisible } = useWalletModal();
+
   const [gameSymbols, setGameSymbols] = useState<string[]>([]);
   const [gameStarted, setGameStarted] = useState(false);
   const [loading, setLoading] = useState(false);
   const [scratchCompleted, setScratchCompleted] = useState(false);
   const [showWinModal, setShowWinModal] = useState(false);
+  const [revealedSlots, setRevealedSlots] = useState<boolean[]>([false, false, false]);
+  const [gameCompleted, setGameCompleted] = useState(false);
+  const [transactionPending, setTransactionPending] = useState(false);
 
   const createGameMutation = useMutation({
     mutationFn: async (gameData: any) => {
@@ -85,16 +95,18 @@ export function ScratchCard({ ticketCost, onGameComplete, onNewGame, walletAddre
 
     try {
       setLoading(true);
-      
+
       // Generate game symbols
       const symbols = generateGameSymbols();
-      setGameSymbols(symbols);
-      setGameStarted(true);
-      
+      let purchaseSignature = '';
+
       if (isDemoMode) {
         // Demo mode: Simple signature generation
-        const mockSignature = `demo_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-        
+        purchaseSignature = `demo_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+
+        setGameSymbols(symbols);
+        setGameStarted(true);
+
         await createGameMutation.mutateAsync({
           playerWallet: walletAddress,
           ticketType: ticketCost.toString(),
@@ -103,7 +115,7 @@ export function ScratchCard({ ticketCost, onGameComplete, onNewGame, walletAddre
           isWin: false,
           multiplier: 0,
           winAmount: '0',
-          purchaseSignature: mockSignature,
+          purchaseSignature,
         });
 
         toast({
@@ -112,18 +124,84 @@ export function ScratchCard({ ticketCost, onGameComplete, onNewGame, walletAddre
           className: "bg-neon-orange/20 border-neon-orange/50",
         });
       } else {
-        // Real mode: Actual transaction
-        const mockSignature = `real_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-        
+        // Real mode: Require wallet connection and process real Solana transaction
+        if (!wallet.connected || !wallet.publicKey || !wallet.sendTransaction) {
+          setVisible(true); // Open wallet modal
+          toast({
+            title: "Wallet Required",
+            description: "Please connect your wallet to play in Real Mode",
+            variant: "destructive",
+          });
+          return;
+        }
+
+        // Process real Solana transaction
+        setTransactionPending(true);
+        try {
+          const poolWallet = import.meta.env.VITE_POOL_WALLET;
+          const teamWallet = import.meta.env.VITE_TEAM_WALLET;
+
+          // Validate environment variables
+          if (!poolWallet || !teamWallet) {
+            throw new Error('Wallet addresses not configured. Please contact support.');
+          }
+
+          const transactionResult = await purchaseTicket({
+            wallet,
+            connection,
+            ticketCost,
+            poolWallet,
+            teamWallet
+          });
+
+          if (!transactionResult.success) {
+            throw new Error(transactionResult.error || 'Transaction failed');
+          }
+
+          purchaseSignature = transactionResult.signature || '';
+
+          toast({
+            title: "🎉 Payment Confirmed!",
+            description: `Successfully paid ${formatSOL(ticketCost)} SOL. Game starting...`,
+            className: "bg-green-600/20 border-green-600/50",
+          });
+        } catch (error) {
+          console.error('Transaction failed:', error);
+          const errorMsg = error instanceof Error ? error.message : "Transaction failed";
+
+          let userFriendlyMsg = errorMsg;
+          if (errorMsg.includes('insufficient')) {
+            userFriendlyMsg = "Insufficient SOL balance. Please add funds to your wallet.";
+          } else if (errorMsg.includes('User rejected')) {
+            userFriendlyMsg = "Transaction was cancelled. Please try again.";
+          } else if (errorMsg.includes('Network')) {
+            userFriendlyMsg = "Network connection issue. Please check your internet and try again.";
+          } else if (errorMsg.includes('Invalid')) {
+            userFriendlyMsg = "Wallet configuration error. Please contact support.";
+          }
+
+          toast({
+            title: "Payment Failed",
+            description: userFriendlyMsg,
+            variant: "destructive",
+          });
+          return;
+        } finally {
+          setTransactionPending(false);
+        }
+
+        setGameSymbols(symbols);
+        setGameStarted(true);
+
         await createGameMutation.mutateAsync({
-          playerWallet: walletAddress,
+          playerWallet: wallet.publicKey.toString(),
           ticketType: ticketCost.toString(),
           maxWin: (ticketCost * 10).toString(),
           symbols,
           isWin: false,
           multiplier: 0,
           winAmount: '0',
-          purchaseSignature: mockSignature,
+          purchaseSignature,
         });
 
         toast({
@@ -144,51 +222,32 @@ export function ScratchCard({ ticketCost, onGameComplete, onNewGame, walletAddre
     }
   };
 
-  const handleScratchComplete = () => {
-    if (scratchCompleted || gameSymbols.length === 0) return;
-    
-    setScratchCompleted(true);
-    
-    // Check for win
-    const gameResult = checkWin(gameSymbols);
-    const winAmount = gameResult.isWin ? calculateWinAmount(ticketCost, gameResult.multiplier) : 0;
-    
-    // Handle payout if won
-    if (gameResult.isWin && walletAddress) {
-      payoutMutation.mutate({
-        playerWallet: walletAddress,
-        winAmount: winAmount.toString(),
-      });
-    }
+  const handleRevealSlot = useCallback((index: number) => {
+    if (revealedSlots[index] || !gameStarted) return;
 
-    // Show win modal with delay for dramatic effect
-    setTimeout(() => {
-      setShowWinModal(true);
-      onGameComplete({
-        isWin: gameResult.isWin,
-        multiplier: gameResult.multiplier,
-        winAmount,
-      });
-    }, 1000);
-  };
+    setRevealedSlots(prev => {
+      const newRevealed = [...prev];
+      newRevealed[index] = true;
+      return newRevealed;
+    });
+  }, [revealedSlots, gameStarted]);
 
   useEffect(() => {
-    if (revealedSlots.every(revealed => revealed) && gameSymbols.length > 0) {
+    if (revealedSlots.every(revealed => revealed) && gameSymbols.length > 0 && !gameCompleted) {
+      setGameCompleted(true);
+
       // All slots revealed, check for win
       const gameResult = checkWin(gameSymbols);
       const winAmount = gameResult.isWin ? calculateWinAmount(ticketCost, gameResult.multiplier) : 0;
-      
 
-      
       // Handle payout if won
       if (gameResult.isWin && walletAddress) {
         payoutMutation.mutate({
           playerWallet: walletAddress,
           winAmount: winAmount.toString(),
-          ticketCost: ticketCost.toString(),
         });
       }
-      
+
       setTimeout(() => {
         onGameComplete({
           isWin: gameResult.isWin,
@@ -197,7 +256,7 @@ export function ScratchCard({ ticketCost, onGameComplete, onNewGame, walletAddre
         });
       }, 1000);
     }
-  }, [revealedSlots, gameSymbols, ticketCost, onGameComplete, walletAddress, payoutMutation]);
+  }, [revealedSlots, gameSymbols, ticketCost, onGameComplete, walletAddress, payoutMutation, gameCompleted]);
 
   return (
     <section className="mb-12">
@@ -207,7 +266,7 @@ export function ScratchCard({ ticketCost, onGameComplete, onNewGame, walletAddre
             <h3 className="text-2xl font-black text-center mb-6 text-neon-cyan">
               SCRATCH TO REVEAL
             </h3>
-            
+
             {/* Selected Card Info */}
             <div className="text-center mb-8">
               <div className="inline-block bg-dark-purple/50 border border-neon-orange rounded-lg px-6 py-2">
@@ -242,10 +301,10 @@ export function ScratchCard({ ticketCost, onGameComplete, onNewGame, walletAddre
               {!gameStarted ? (
                 <Button 
                   onClick={handleBuyCard}
-                  disabled={loading || !walletAddress}
+                  disabled={loading || transactionPending || !walletAddress}
                   className="bg-gradient-to-r from-neon-orange to-neon-gold text-black font-black px-8 py-3 rounded-lg hover:shadow-neon-gold transition-all duration-300 hover:transform hover:scale-105"
                 >
-                  {loading ? 'PROCESSING...' : 'BUY CARD'}
+                  {transactionPending ? 'CONFIRMING TX...' : loading ? 'PROCESSING...' : 'BUY CARD'}
                 </Button>
               ) : (
                 <Button 

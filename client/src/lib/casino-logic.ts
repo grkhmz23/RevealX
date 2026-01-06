@@ -28,8 +28,8 @@ export class CasinoEngine {
   private baseWinRates: Record<number, number> = {
     0.1: 0.25, // 25% - Bronze
     0.2: 0.22, // 22% - Silver  
-    0.3: 0.20, // 20% - Gold
-    0.5: 0.18, // 18% - Platinum
+    0.5: 0.20, // 20% - Gold
+    0.75: 0.18, // 18% - Platinum
     1.0: 0.15, // 15% - Diamond
   };
 
@@ -119,7 +119,7 @@ export class CasinoEngine {
     const weights = [50, 30, 15, 5]; // 1x=50%, 2x=30%, 5x=15%, 10x=5%
     const totalWeight = weights.reduce((sum, w) => sum + w, 0);
     const random = Math.random() * totalWeight;
-    
+
     let weightSum = 0;
     for (let i = 0; i < weights.length; i++) {
       weightSum += weights[i];

@@ -1,19 +1,19 @@
 import { gameSymbols, multipliers } from '@shared/schema';
 
 export function generateGameSymbols(): string[] {
-  return Array.from({ length: 3 }, () => 
+  return Array.from({ length: 3 }, () =>
     gameSymbols[Math.floor(Math.random() * gameSymbols.length)]
   );
 }
 
 export function checkWin(symbols: string[]): { isWin: boolean; multiplier: number } {
-  const allMatch = symbols.every(symbol => symbol === symbols[0]);
-  
-  if (!allMatch) {
+  const allMatch = symbols.length === 3 && symbols.every(symbol => symbol === symbols[0]);
+  const isWinningSymbol = symbols[0] !== '❌';
+
+  if (!allMatch || !isWinningSymbol) {
     return { isWin: false, multiplier: 0 };
   }
 
-  // Random multiplier for wins
   const multiplier = multipliers[Math.floor(Math.random() * multipliers.length)];
   return { isWin: true, multiplier };
 }

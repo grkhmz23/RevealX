@@ -63,7 +63,7 @@ const getCardDesign = (ticketCost: number) => {
       accentColor: "text-yellow-200",
       bgPattern: "bg-gradient-to-br from-yellow-900/20 to-amber-900/30",
     },
-    0.7: {
+    0.75: {
       name: "PLATINUM",
       gradient: "from-indigo-400 via-purple-500 to-pink-500",
       borderColor: "border-purple-400",
@@ -112,7 +112,7 @@ export function ScratchCardModal({
 }: ScratchCardModalProps) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  
+
   const [gameSymbols, setGameSymbols] = useState<string[]>([]);
   const [revealedZones, setRevealedZones] = useState<boolean[]>([false, false, false]);
   const [gameResult, setGameResult] = useState<GameResult | null>(null);
@@ -122,7 +122,7 @@ export function ScratchCardModal({
   const [autoRevealAll, setAutoRevealAll] = useState(false);
   const [initialGameOutcome, setInitialGameOutcome] = useState<WinCalculation | null>(null);
   const [createdGameId, setCreatedGameId] = useState<string | null>(null);
-  
+
   // Solana wallet hooks for real mode
   const wallet = useWallet();
   const { connection } = useConnection();
@@ -163,9 +163,9 @@ export function ScratchCardModal({
   const initializeGame = async () => {
     try {
       setLoading(true);
-      
+
       let purchaseSignature = '';
-      
+
       if (!isDemoMode) {
         // Handle real mode - require wallet connection and process payment
         if (!wallet.connected || !wallet.publicKey || !wallet.sendTransaction) {
@@ -178,18 +178,18 @@ export function ScratchCardModal({
           onClose();
           return;
         }
-        
+
         // Process real Solana transaction
         setTransactionPending(true);
         try {
           const poolWallet = import.meta.env.VITE_POOL_WALLET;
           const teamWallet = import.meta.env.VITE_TEAM_WALLET;
-          
+
           // Validate environment variables
           if (!poolWallet || !teamWallet) {
             throw new Error('Wallet addresses not configured. Please contact support.');
           }
-          
+
           const transactionResult = await purchaseTicket({
             wallet,
             connection,
@@ -197,13 +197,13 @@ export function ScratchCardModal({
             poolWallet,
             teamWallet
           });
-          
+
           if (!transactionResult.success) {
             throw new Error(transactionResult.error || 'Transaction failed');
           }
-          
+
           purchaseSignature = transactionResult.signature || '';
-          
+
           toast({
             title: "🎉 Payment Confirmed!",
             description: `Successfully paid ${formatSOL(ticketCost)} SOL. Game starting...`,
@@ -212,7 +212,7 @@ export function ScratchCardModal({
         } catch (error) {
           console.error('Transaction failed:', error);
           const errorMsg = error instanceof Error ? error.message : "Transaction failed";
-          
+
           let userFriendlyMsg = errorMsg;
           if (errorMsg.includes('insufficient')) {
             userFriendlyMsg = "Insufficient SOL balance. Please add funds to your wallet.";
@@ -223,7 +223,7 @@ export function ScratchCardModal({
           } else if (errorMsg.includes('Invalid')) {
             userFriendlyMsg = "Wallet configuration error. Please contact support.";
           }
-          
+
           toast({
             title: "Payment Failed",
             description: userFriendlyMsg,
@@ -238,10 +238,10 @@ export function ScratchCardModal({
         // Demo mode signature
         purchaseSignature = `demo_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
       }
-      
+
       // Get current pool balance for casino logic
       let currentPoolBalance = 0;
-      
+
       if (isDemoMode) {
         // For demo mode, use a fake high pool balance so games work normally
         currentPoolBalance = 100; // 100 SOL fake pool for demo
@@ -251,16 +251,16 @@ export function ScratchCardModal({
         const stats = await statsResponse.json();
         currentPoolBalance = parseFloat((stats as any)?.totalPool || '0');
       }
-      
+
       // Use casino engine to determine game outcome
       const gameOutcome = casinoEngine.calculateWin(ticketCost, currentPoolBalance);
-      
+
       setGameSymbols(gameOutcome.symbols);
       setInitialGameOutcome(gameOutcome); // Store the initial outcome
       setRevealedZones([false, false, false]);
       setShowResult(false);
       setGameResult(null);
-      
+
       // Only save to database for real games, not demo games
       if (!isDemoMode) {
         const createdGame = await createGameMutation.mutateAsync({
@@ -273,7 +273,7 @@ export function ScratchCardModal({
           winAmount: gameOutcome.winAmount.toString(),
           purchaseSignature,
         });
-        
+
         // Store the game ID for later payout reference
         if (createdGame && createdGame.id) {
           setCreatedGameId(createdGame.id);
@@ -323,10 +323,10 @@ export function ScratchCardModal({
       console.error('No initial game outcome found');
       return;
     }
-    
+
     const finalOutcome = initialGameOutcome;
     const winAmount = finalOutcome.canWin ? finalOutcome.winAmount : 0;
-    
+
     const gameResult = {
       isWin: finalOutcome.canWin,
       multiplier: finalOutcome.multiplier,
@@ -334,20 +334,20 @@ export function ScratchCardModal({
     };
 
     setGameResult(gameResult);
-    
+
     // Track user stats for Real Mode only
     if (!isDemoMode && wallet.publicKey) {
       const statsManager = getUserStatsManager(wallet.publicKey);
       if (statsManager) {
         // Map ticket cost to card type
         const cardTypeMap: Record<number, string> = {
-          0.1: 'starter',
-          0.25: 'bronze', 
-          0.5: 'silver',
-          0.75: 'gold',
-          1.0: 'platinum'
+          0.1: 'bronze',
+          0.2: 'silver', 
+          0.5: 'gold',
+          0.75: 'platinum',
+          1.0: 'diamond'
         };
-        
+
         statsManager.recordGamePlay({
           cardType: cardTypeMap[ticketCost] || 'starter',
           solAmount: ticketCost,
@@ -358,10 +358,10 @@ export function ScratchCardModal({
         });
       }
     }
-    
+
     // Update the game with final results
     const currentWalletAddress = isDemoMode ? walletAddress : (wallet.publicKey?.toString() || walletAddress);
-    
+
     // Handle payout if won
     if (finalOutcome.canWin && !isDemoMode && wallet.publicKey) {
       console.log('🏆 WINNER! Attempting payout...');
@@ -369,22 +369,22 @@ export function ScratchCardModal({
       console.log(`🏆 Player wallet: ${wallet.publicKey.toString()}`);
       console.log(`🏆 Ticket cost: ${ticketCost} SOL`);
       console.log(`🏆 Multiplier: ${finalOutcome.multiplier}x`);
-      
+
       try {
         const payoutResult = await payoutMutation.mutateAsync({
           playerWallet: wallet.publicKey.toString(),
           winAmount: winAmount.toString(),
           gameId: createdGameId // Pass game ID so payout signature can be saved
         });
-        
+
         console.log('✅ Payout successful:', payoutResult);
-        
+
         // Show result after payout completes
         setTimeout(() => {
           setShowResult(true);
           onGameComplete?.(gameResult);
         }, 1000);
-        
+
         toast({
           title: "🎉 You Won!",
           description: `${formatSOL(winAmount)} SOL has been sent to your wallet!`,
@@ -392,7 +392,7 @@ export function ScratchCardModal({
         });
       } catch (error) {
         console.error('❌ Payout failed:', error);
-        
+
         let errorMsg = "Win recorded but payout failed.";
         if (error instanceof Error) {
           if (error.message.includes('Insufficient pool balance')) {
@@ -401,7 +401,7 @@ export function ScratchCardModal({
             errorMsg = "Blockchain transaction failed. Your win is recorded - contact support.";
           }
         }
-        
+
         toast({
           title: "Payout Error",
           description: errorMsg,
@@ -454,7 +454,7 @@ export function ScratchCardModal({
     } else {
       document.body.classList.remove('modal-open');
     }
-    
+
     // Cleanup on unmount
     return () => {
       document.body.classList.remove('modal-open');
@@ -486,7 +486,7 @@ export function ScratchCardModal({
 
         {/* Card Header */}
         <div className="relative p-6 text-center border-b border-white/10">
-          
+
           <div className={`text-xs font-bold ${cardDesign.accentColor} mb-2`}>
             {cardDesign.name} TIER
           </div>
