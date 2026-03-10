@@ -1,0 +1,16 @@
+# Ignore server bundle and source files
+dist/index.js
+server/
+*.ts
+!api/*.ts
+
+# Ignore dev files
+node_modules
+.git
+.env
+.env.*
+README.md
+
+# Ignore build artifacts
+*.log
+.DS_Store
