@@ -1,16 +1,14 @@
-# Ignore server bundle and source files
-dist/index.js
+# Ignore server source files (not needed for static build)
 server/
-*.ts
-!api/*.ts
 
 # Ignore dev files
 node_modules
 .git
 .env
 .env.*
-README.md
 
-# Ignore build artifacts
+# Ignore logs
 *.log
+
+# Ignore OS files
 .DS_Store
