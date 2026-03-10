@@ -3,6 +3,7 @@
   "buildCommand": "npm run build && rm -f dist/index.js",
   "outputDirectory": "dist/public",
   "framework": null,
+  "installCommand": "npm install",
   "rewrites": [
     {
       "source": "/api/(.*)",
