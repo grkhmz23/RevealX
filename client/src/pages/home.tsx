@@ -1,8 +1,10 @@
 import { useState } from 'react';
 import { Link } from 'wouter';
-import { WalletButton } from '@/components/wallet-button';
 import { ModeToggle } from '@/components/mode-toggle';
 import { useGameMode } from '@/contexts/game-mode-context';
+import { useChain } from '@/contexts/chain-context';
+import { ChainSelector } from '@/components/chain-selector';
+import { DynamicWalletButton } from '@/components/dynamic-wallet-button';
 import { ScratchCardGrid } from '@/components/scratch-card-grid';
 import { ScratchCardModal } from '@/components/scratch-card-modal';
 import { GameStats } from '@/components/game-stats';
@@ -12,6 +14,7 @@ import { SiX } from 'react-icons/si';
 
 export default function Home() {
   const { isDemoMode } = useGameMode();
+  const { chainName, nativeCurrency } = useChain();
   const [selectedTicket, setSelectedTicket] = useState<number | null>(null);
   const [walletAddress, setWalletAddress] = useState<string | null>(null);
   const [showModal, setShowModal] = useState(false);
@@ -24,8 +27,6 @@ export default function Home() {
   const handleGameComplete = (result: { isWin: boolean; multiplier: number; winAmount: number }) => {
     // Game completed, modal will handle the result display
   };
-
-  // Wallet connection is now handled by WalletButton component
 
   const handleCloseModal = () => {
     setShowModal(false);
@@ -45,7 +46,7 @@ export default function Home() {
               </div>
               <div className="hidden sm:block">
                 <h1 className="text-2xl font-black text-neon-cyan">SCRATCH</h1>
-                <h2 className="text-xl font-bold text-neon-orange">'n SOL</h2>
+                <h2 className="text-xl font-bold text-neon-orange">'n {nativeCurrency}</h2>
               </div>
             </div>
           </Link>
@@ -60,8 +61,8 @@ export default function Home() {
             </Link>
           </div>
 
-          {/* Social Media, Mode Toggle and Wallet Connection */}
-          <div className="flex items-center space-x-4 lg:ml-auto">
+          {/* Social Media, Chain Selector, Mode Toggle and Wallet Connection */}
+          <div className="flex items-center space-x-3 lg:ml-auto">
             <a 
               href="https://x.com/scratchnsol" 
               target="_blank" 
@@ -71,8 +72,9 @@ export default function Home() {
             >
               <SiX className="w-5 h-5 text-neon-cyan group-hover:text-white transition-colors" />
             </a>
+            <ChainSelector />
             <ModeToggle />
-            {!isDemoMode && <WalletButton />}
+            {!isDemoMode && <DynamicWalletButton />}
           </div>
         </div>
       </header>
@@ -83,7 +85,7 @@ export default function Home() {
           <div className="flex items-center justify-center">
             <div className="px-6 py-2 bg-neon-cyan/10 border border-neon-cyan/30 rounded-lg">
               <span className="text-lg font-bold text-neon-cyan animate-pulse" data-testid="text-launching-soon">
-                🚀 Launching Soon
+                🚀 Now on {chainName}!
               </span>
             </div>
           </div>
@@ -121,7 +123,7 @@ export default function Home() {
       <footer className="border-t border-neon-cyan/30 mt-20 py-8">
         <div className="max-w-7xl mx-auto px-4 text-center">
           <div className="text-gray-400 text-sm mb-4">
-            Powered by Solana Blockchain • Built with ❤️ for the crypto community
+            Powered by {chainName} Blockchain • Built with ❤️ for the crypto community
           </div>
           <div className="text-xs text-gray-500">
             Play responsibly • Must be 18+ • Gambling can be addictive
