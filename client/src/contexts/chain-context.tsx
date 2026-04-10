@@ -43,7 +43,7 @@ export function ChainProvider({ children }: ChainProviderProps) {
   const isBase = selectedChain === 'base'
   
   const chainName = isSolana ? 'Solana' : 'Base'
-  const nativeCurrency = isSolana ? 'SOL' : 'ETH'
+  const nativeCurrency = isSolana ? 'SOL' : 'USDC'
 
   // Log chain changes for debugging
   useEffect(() => {
@@ -87,23 +87,23 @@ export function useChainConfig() {
         { cost: 1.0, maxWin: 10, label: 'Diamond' },
       ]
     : [
-        { cost: 0.001, maxWin: 0.01, label: 'Bronze' },
-        { cost: 0.002, maxWin: 0.02, label: 'Silver' },
-        { cost: 0.005, maxWin: 0.05, label: 'Gold' },
-        { cost: 0.0075, maxWin: 0.075, label: 'Platinum' },
-        { cost: 0.01, maxWin: 0.1, label: 'Diamond' },
+        { cost: 1, maxWin: 10, label: 'Bronze' },      // $1 USDC
+        { cost: 2, maxWin: 20, label: 'Silver' },      // $2 USDC
+        { cost: 5, maxWin: 50, label: 'Gold' },        // $5 USDC
+        { cost: 10, maxWin: 100, label: 'Platinum' },  // $10 USDC
+        { cost: 25, maxWin: 250, label: 'Diamond' },   // $25 USDC
       ]
 
   const formatAmount = (amount: number) => {
     return isSolana 
       ? `${amount.toFixed(2)} SOL`
-      : `${amount.toFixed(4)} ETH`
+      : `${amount.toFixed(0)} USDC`
   }
 
   return {
     ticketTiers,
     formatAmount,
-    minBet: isSolana ? 0.1 : 0.001,
-    maxBet: isSolana ? 1.0 : 0.01,
+    minBet: isSolana ? 0.1 : 1,      // 0.1 SOL or 1 USDC
+    maxBet: isSolana ? 1.0 : 25,     // 1 SOL or 25 USDC
   }
 }

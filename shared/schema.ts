@@ -95,13 +95,13 @@ export const solanaTicketTypes = [
   { cost: 1.0, maxWin: 10, label: 'Diamond' },
 ] as const;
 
-// Ticket tiers for Base (ETH) - approximate USD value ~$2.50-$25
+// Ticket tiers for Base (USDC) - stable USD values
 export const baseTicketTypes = [
-  { cost: 0.001, maxWin: 0.01, label: 'Bronze' },
-  { cost: 0.002, maxWin: 0.02, label: 'Silver' },
-  { cost: 0.005, maxWin: 0.05, label: 'Gold' },
-  { cost: 0.0075, maxWin: 0.075, label: 'Platinum' },
-  { cost: 0.01, maxWin: 0.1, label: 'Diamond' },
+  { cost: 1, maxWin: 10, label: 'Bronze', currency: 'USDC' },
+  { cost: 2, maxWin: 20, label: 'Silver', currency: 'USDC' },
+  { cost: 5, maxWin: 50, label: 'Gold', currency: 'USDC' },
+  { cost: 10, maxWin: 100, label: 'Platinum', currency: 'USDC' },
+  { cost: 25, maxWin: 250, label: 'Diamond', currency: 'USDC' },
 ] as const;
 
 // Combined ticket types helper

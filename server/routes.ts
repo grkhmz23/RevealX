@@ -20,7 +20,7 @@ const baseService = getBaseService();
 // Valid ticket costs per chain
 const VALID_TICKET_COSTS: Record<ChainType, number[]> = {
   solana: [0.1, 0.2, 0.5, 0.75, 1.0],
-  base: [0.001, 0.002, 0.005, 0.0075, 0.01],
+  base: [1, 2, 5, 10, 25], // USDC amounts
 };
 
 export async function registerRoutes(app: Express): Promise<Server> {

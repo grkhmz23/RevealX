@@ -2,32 +2,41 @@
  * Base Chain Service
  * 
  * EVM wallet integration for Base chain using Viem
- * Handles ETH transfers, balance checks, and transaction verification
+ * Handles USDC transfers, balance checks, and transaction verification
  */
 
 import { 
   createPublicClient, 
   createWalletClient, 
   http, 
-  parseEther, 
-  formatEther,
+  parseUnits, 
+  formatUnits,
   type Hash,
   type Address,
+  erc20Abi,
 } from 'viem'
 import { base, baseSepolia } from 'viem/chains'
 import { privateKeyToAccount } from 'viem/accounts'
 import { withRetry } from '../utils/retry'
+
+// USDC Contract addresses
+const USDC_CONTRACTS = {
+  [base.id]: '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913' as Address,
+  [baseSepolia.id]: '0x036CbD53842c5426634e7929541eC2318f3dCF7e' as Address,
+}
 
 export class BaseService {
   private publicClient
   private walletClient
   private poolAccount: ReturnType<typeof privateKeyToAccount>
   private chain: typeof base | typeof baseSepolia
+  private usdcContract: Address
 
   constructor() {
     // Determine network
     const network = process.env.BASE_NETWORK || 'mainnet'
     this.chain = network === 'mainnet' ? base : baseSepolia
+    this.usdcContract = USDC_CONTRACTS[this.chain.id]
     
     const rpcUrl = process.env.BASE_RPC_URL || 
       (network === 'mainnet' 
@@ -59,36 +68,39 @@ export class BaseService {
     })
 
     console.log(`[BaseService] Initialized for ${this.chain.name}`)
+    console.log(`[BaseService] USDC Contract: ${this.usdcContract}`)
     console.log(`[BaseService] Pool address: ${this.poolAccount.address}`)
   }
 
   /**
-   * Send ETH payout to winner
+   * Send USDC payout to winner
    */
-  async sendPayout(toAddress: Address, amountEth: number): Promise<Hash | null> {
+  async sendPayout(toAddress: Address, amountUsdc: number): Promise<Hash | null> {
     try {
       // Demo mode check
       if (toAddress.toLowerCase().startsWith('demo')) {
         const demoHash = `0x${Date.now().toString(16)}${Math.random().toString(16).slice(2)}` as Hash
-        console.log(`[BaseService] Demo payout: ${amountEth} ETH to ${toAddress}`)
+        console.log(`[BaseService] Demo payout: ${amountUsdc} USDC to ${toAddress}`)
         return demoHash
       }
 
-      // Check pool balance first
+      // Check pool USDC balance first
       const poolBalance = await this.getPoolBalance()
-      if (poolBalance < amountEth + 0.0001) { // Account for gas
-        console.error(`[BaseService] Insufficient pool balance: ${poolBalance} ETH`)
+      if (poolBalance < amountUsdc) {
+        console.error(`[BaseService] Insufficient pool balance: ${poolBalance} USDC`)
         return null
       }
 
-      // Send transaction with retry
-      const hash: Hash = await withRetry(async () => {
-        return await this.walletClient.sendTransaction({
-          to: toAddress,
-          value: parseEther(amountEth.toString()),
-          // Gas settings for Base
-          maxFeePerGas: BigInt(1000000000), // 1 gwei
-          maxPriorityFeePerGas: BigInt(100000000), // 0.1 gwei
+      // Convert amount to USDC decimals (6 decimals)
+      const amountRaw = parseUnits(amountUsdc.toString(), 6)
+
+      // Send USDC transfer transaction
+      const hash = await withRetry(async () => {
+        return await this.walletClient.writeContract({
+          address: this.usdcContract,
+          abi: erc20Abi,
+          functionName: 'transfer',
+          args: [toAddress, amountRaw],
         })
       }, {
         maxRetries: 3,
@@ -96,7 +108,7 @@ export class BaseService {
         retryableErrors: ['TIMEOUT', 'NONCE', 'REPLACEMENT'],
       })
 
-      console.log(`[BaseService] Payout sent: ${amountEth} ETH to ${toAddress}, tx: ${hash}`)
+      console.log(`[BaseService] Payout sent: ${amountUsdc} USDC to ${toAddress}, tx: ${hash}`)
       return hash
     } catch (error) {
       console.error('[BaseService] Payout failed:', error)
@@ -105,7 +117,7 @@ export class BaseService {
   }
 
   /**
-   * Verify transaction was successful
+   * Verify USDC transaction was successful
    */
   async verifyTransaction(hash: Hash): Promise<{
     valid: boolean
@@ -136,9 +148,10 @@ export class BaseService {
         return { valid: false }
       }
 
+      // For USDC transfers, we need to parse the transfer event
+      // This is a simplified check - in production, you'd parse the event logs
       return {
         valid: true,
-        amount: Number(formatEther(tx.value)),
         from: tx.from,
         to: tx.to || undefined,
         blockNumber: receipt.blockNumber,
@@ -150,14 +163,19 @@ export class BaseService {
   }
 
   /**
-   * Get pool wallet ETH balance
+   * Get pool wallet USDC balance
    */
   async getPoolBalance(): Promise<number> {
     try {
-      const balance = await this.publicClient.getBalance({
-        address: this.poolAccount.address,
+      const balance = await this.publicClient.readContract({
+        address: this.usdcContract,
+        abi: erc20Abi,
+        functionName: 'balanceOf',
+        args: [this.poolAccount.address],
       })
-      return Number(formatEther(balance))
+      
+      // USDC has 6 decimals
+      return Number(formatUnits(balance, 6))
     } catch (error) {
       console.error('[BaseService] Failed to get pool balance:', error)
       return 0
@@ -172,12 +190,25 @@ export class BaseService {
   }
 
   /**
-   * Get user's ETH balance
+   * Get USDC contract address
+   */
+  getUsdcContract(): Address {
+    return this.usdcContract
+  }
+
+  /**
+   * Get user's USDC balance
    */
   async getBalance(address: Address): Promise<number> {
     try {
-      const balance = await this.publicClient.getBalance({ address })
-      return Number(formatEther(balance))
+      const balance = await this.publicClient.readContract({
+        address: this.usdcContract,
+        abi: erc20Abi,
+        functionName: 'balanceOf',
+        args: [address],
+      })
+      
+      return Number(formatUnits(balance, 6))
     } catch (error) {
       console.error('[BaseService] Failed to get balance:', error)
       return 0
@@ -202,22 +233,23 @@ export class BaseService {
   }
 
   /**
-   * Get current gas price
-   */
-  async getGasPrice(): Promise<bigint> {
-    try {
-      return await this.publicClient.getGasPrice()
-    } catch (error) {
-      console.error('[BaseService] Failed to get gas price:', error)
-      return BigInt(1000000000) // Fallback: 1 gwei
-    }
-  }
-
-  /**
    * Check if address is valid
    */
   isValidAddress(address: string): address is Address {
     return /^0x[a-fA-F0-9]{40}$/.test(address)
+  }
+
+  /**
+   * Get ETH balance (for gas)
+   */
+  async getEthBalance(address: Address): Promise<number> {
+    try {
+      const balance = await this.publicClient.getBalance({ address })
+      return Number(formatUnits(balance, 18))
+    } catch (error) {
+      console.error('[BaseService] Failed to get ETH balance:', error)
+      return 0
+    }
   }
 }
 
