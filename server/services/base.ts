@@ -51,9 +51,10 @@ export class BaseService {
 
     // Initialize pool wallet
     const privateKey = process.env.BASE_POOL_PRIVATE_KEY as `0x${string}` | undefined
-    
-    if (!privateKey) {
-      console.warn('BASE_POOL_PRIVATE_KEY not set. Base service will not be able to send payouts.')
+    const isValidPrivateKey = (key: string) => /^0x[0-9a-fA-F]{64}$/.test(key)
+
+    if (!privateKey || !isValidPrivateKey(privateKey)) {
+      console.warn('BASE_POOL_PRIVATE_KEY not set or invalid. Base service will operate in read-only mode.')
       // Create a dummy account for read-only operations
       this.poolAccount = privateKeyToAccount('0x0000000000000000000000000000000000000000000000000000000000000001')
     } else {
@@ -75,8 +76,18 @@ export class BaseService {
   /**
    * Send USDC payout to winner
    */
+  private isReadOnly(): boolean {
+    // Check if we're using the dummy account (read-only mode)
+    return this.poolAccount.address.toLowerCase() === '0x7e5f4552091a69125d5dfcb7b8c2659029395bdf'.toLowerCase()
+  }
+
   async sendPayout(toAddress: Address, amountUsdc: number): Promise<Hash | null> {
     try {
+      if (this.isReadOnly()) {
+        console.warn('[BaseService] Cannot send payout: BASE_POOL_PRIVATE_KEY not configured')
+        return null
+      }
+
       // Demo mode check
       if (toAddress.toLowerCase().startsWith('demo')) {
         const demoHash = `0x${Date.now().toString(16)}${Math.random().toString(16).slice(2)}` as Hash
