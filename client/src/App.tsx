@@ -5,14 +5,14 @@ import { AppProviders } from "@/components/providers";
 import Home from "@/pages/home";
 import NotFound from "@/pages/not-found";
 import Dashboard from "@/pages/dashboard";
-import BagsJackpot from "@/pages/bags-jackpot";
+
 
 function Router() {
   return (
     <Switch>
       <Route path="/" component={Home} />
       <Route path="/dashboard" component={Dashboard} />
-      <Route path="/bags-jackpot" component={BagsJackpot} />
+      {/* <Route path="/bags-jackpot" component={BagsJackpot} /> */}
       <Route component={NotFound} />
     </Switch>
   );
