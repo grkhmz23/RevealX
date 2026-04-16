@@ -36,13 +36,10 @@ contract Deploy is Script {
         uint256 vrfSubscriptionId = vm.envUint("VRF_SUBSCRIPTION_ID");
         bytes32 vrfKeyHash = vm.envBytes32("VRF_KEY_HASH");
 
-        // Base Sepolia defaults if not provided
-        if (usdc == address(0)) {
-            usdc = 0x036CbD53842c5426634e7929541eC2318f3dCF7e; // Base Sepolia USDC
-        }
-        if (vrfCoordinator == address(0)) {
-            vrfCoordinator = 0x5C210eF41CD1a72de73bF76eC39637bB0d3d7BEE; // Base Sepolia
-        }
+        // No fallback defaults — all env vars must be explicitly set
+        // to prevent accidental deployment with unverified addresses.
+        require(usdc != address(0), "Deploy: missing USDC_ADDRESS");
+        require(vrfCoordinator != address(0), "Deploy: missing VRF_COORDINATOR");
 
         vm.startBroadcast(deployerPrivateKey);
 
