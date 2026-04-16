@@ -1,0 +1,26 @@
+services:
+  - type: web
+    name: revealx
+    runtime: node
+    region: frankfurt
+    buildCommand: npm run build && npm run build:server
+    startCommand: npm start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: FRONTEND_URL
+        value: https://revealx.fun
+      - key: PORT
+        value: "10000"
+      - key: DATABASE_URL
+        sync: false
+      - key: POOL_WALLET_PRIVATE_KEY
+        sync: false
+      - key: SOLANA_RPC_URL
+        sync: false
+      - key: BASE_POOL_PRIVATE_KEY
+        sync: false
+      - key: BASE_RPC_URL
+        value: https://mainnet.base.org
+      - key: SESSION_SECRET
+        generateValue: true

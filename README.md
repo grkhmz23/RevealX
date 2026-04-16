@@ -120,25 +120,18 @@ npm start
 
 ## 🌐 Deployment
 
-### Vercel (Recommended)
+### Render (Recommended)
 
-1. **Install Vercel CLI**:
-   ```bash
-   npm i -g vercel
-   ```
+Deploy the full-stack app (frontend + backend + API) on a single service:
 
-2. **Deploy**:
-   ```bash
-   vercel
-   ```
-
-3. **Set Environment Variables** in Vercel Dashboard:
-   - Go to Project Settings → Environment Variables
-   - Add all variables from `.env.example`
-
-4. **Add PostgreSQL Database**:
-   - Use Vercel Postgres or any PostgreSQL provider
-   - Add `DATABASE_URL` to environment variables
+1. **Connect your GitHub repo** to Render
+2. **Create a new Web Service** with these settings:
+   - **Build Command:** `npm run build && npm run build:server`
+   - **Start Command:** `npm start`
+   - **Environment:** `Node`
+3. **Add Environment Variables** from `.env.example`
+4. **Add Custom Domain:** `revealx.fun`
+5. **Update DNS:** Point `revealx.fun` to Render's provided CNAME/A record
 
 ### Manual Server Deployment
 

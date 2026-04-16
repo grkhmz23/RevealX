@@ -17,7 +17,6 @@ export const corsOptions = {
       process.env.FRONTEND_URL,
       "https://revealx.fun",
       "https://www.revealx.fun",
-      /\.vercel\.app$/,
       /\.replit\.dev$/,
       /\.repl\.co$/,
       "http://localhost:3000",
