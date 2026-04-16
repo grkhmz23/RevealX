@@ -15,6 +15,8 @@ export const corsOptions = {
     
     const allowedOrigins = [
       process.env.FRONTEND_URL,
+      "https://revealx.fun",
+      "https://www.revealx.fun",
       /\.vercel\.app$/,
       /\.replit\.dev$/,
       /\.repl\.co$/,

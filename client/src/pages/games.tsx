@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { WalletButton } from '@/components/wallet-button';
 import { ModeToggle } from '@/components/mode-toggle';
 import { useGameMode } from '@/contexts/game-mode-context';
-import logoPath from '@assets/ChatGPT Image 28 juil. 2025, 10_17_36_1753690663892.png';
+import logoPath from '@assets/revealx-logo.png';
 
 export default function Games() {
   const { isDemoMode } = useGameMode();
@@ -19,11 +19,11 @@ export default function Games() {
           <Link href="/">
             <div className="flex items-center space-x-4 cursor-pointer hover:opacity-80 transition-opacity duration-200">
               <div className="w-16 h-16 bg-gradient-to-br from-neon-cyan to-neon-orange rounded-lg flex items-center justify-center border-2 border-neon-cyan shadow-neon-cyan">
-                <img src={logoPath} alt="Scratch 'n SOL" className="w-12 h-12 object-contain" />
+                <img src={logoPath} alt="RevealX" className="w-12 h-12 object-contain" />
               </div>
               <div className="hidden sm:block">
-                <h1 className="text-2xl font-black text-neon-cyan">SCRATCH</h1>
-                <h2 className="text-xl font-bold text-neon-orange">'n SOL</h2>
+                <h1 className="text-2xl font-black text-neon-cyan">REVEALX</h1>
+                <h2 className="text-xl font-bold text-neon-orange">Multi-Chain</h2>
               </div>
             </div>
           </Link>

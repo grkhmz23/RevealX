@@ -68,12 +68,14 @@ export async function setupVite(app: Express, server: Server) {
 }
 
 export function serveStatic(app: Express) {
-  const distPath = path.resolve(import.meta.dirname, "public");
+  // In production, built client files are at dist/public relative to project root
+  const distPath = path.resolve(import.meta.dirname, "..", "dist", "public");
 
   if (!fs.existsSync(distPath)) {
-    throw new Error(
-      `Could not find the build directory: ${distPath}, make sure to build the client first`,
+    console.warn(
+      `Warning: Could not find the build directory: ${distPath}. Static file serving will be skipped. If you are running API-only mode (e.g., backend on Render with frontend on Vercel), this is expected.`,
     );
+    return;
   }
 
   app.use(express.static(distPath));

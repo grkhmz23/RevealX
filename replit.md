@@ -1,8 +1,8 @@
-# Scratch 'n SOL - Solana Casino Platform
+# RevealX - Multi-Chain Casino Platform
 
 ## Overview
 
-Scratch 'n SOL is a complete Solana-based casino platform focused exclusively on scratch card gambling. Users can purchase virtual scratch cards using SOL cryptocurrency and potentially win prizes. The application features a modern, neon-themed UI with real Solana wallet integration and secure payment processing.
+RevealX is a complete multi-chain casino platform focused exclusively on scratch card gambling on Solana and Base. Users can purchase virtual scratch cards using SOL cryptocurrency and potentially win prizes. The application features a modern, neon-themed UI with real Solana wallet integration and secure payment processing.
 
 ## User Preferences
 
@@ -119,7 +119,7 @@ The application uses PostgreSQL with Drizzle ORM for data persistence:
   - Ensures displayed symbols always match the actual win/loss result
 
 - **October 10, 2025**: Added social media and token launch banner
-  - Added X/Twitter link (https://x.com/scratchnsol) to header with neon-styled icon
+  - Added X/Twitter link (https://x.com/revealxfun) to header with neon-styled icon
   - Added "Launching Soon" banner below header with neon-cyan pulse animation
   - Banner prepared for future token contract address update
 

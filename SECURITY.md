@@ -1,6 +1,6 @@
-# Security Guide for Scratch 'n SOL
+# Security Guide for RevealX
 
-This document outlines all security measures implemented in the Scratch 'n SOL application.
+This document outlines all security measures implemented in the RevealX application.
 
 ## Table of Contents
 
@@ -12,7 +12,7 @@ This document outlines all security measures implemented in the Scratch 'n SOL a
 
 ## Overview
 
-Scratch 'n SOL is a cryptocurrency gambling application handling real SOL transactions. Security is paramount to protect user funds and prevent abuse.
+RevealX is a cryptocurrency gambling application handling real SOL and ETH transactions. Security is paramount to protect user funds and prevent abuse.
 
 ### Threat Model
 
@@ -233,7 +233,7 @@ This checks:
 If you discover a security vulnerability:
 
 1. **DO NOT** open a public issue
-2. Email security@scratchnsol.com (example)
+2. Email security@revealx.fun (example)
 3. Allow 48 hours for initial response
 4. Responsible disclosure appreciated
 

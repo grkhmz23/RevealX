@@ -1,6 +1,6 @@
-# 🎰 Scratch 'n SOL
+# 🎰 RevealX
 
-A Solana-based casino platform focused on scratch card gambling. Users can purchase virtual scratch cards using SOL cryptocurrency and potentially win prizes.
+A multi-chain casino platform focused on scratch card gambling. Users can purchase virtual scratch cards using SOL or ETH cryptocurrency and potentially win prizes.
 
 ![License](https://img.shields.io/badge/license-MIT-blue.svg)
 ![React](https://img.shields.io/badge/react-18.3-61DAFB.svg)
@@ -61,7 +61,7 @@ A Solana-based casino platform focused on scratch card gambling. Users can purch
 
 ```bash
 git clone <your-repo-url>
-cd Scratchndsol
+cd revealx
 npm install
 ```
 
@@ -75,7 +75,7 @@ Edit `.env` with your values:
 
 ```env
 # Required: PostgreSQL connection
-DATABASE_URL=postgres://user:password@localhost:5432/scratchndsol
+DATABASE_URL=postgres://user:password@localhost:5432/revealx
 
 # Required: Pool wallet private key (base58)
 # This wallet holds prize funds - KEEP SECRET!
@@ -260,4 +260,4 @@ For issues and questions:
 
 ---
 
-Built with 💜 on Solana
+Built with 💜 on Solana & Base

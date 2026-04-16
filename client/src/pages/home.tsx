@@ -9,7 +9,7 @@ import { ScratchCardGrid } from '@/components/scratch-card-grid';
 import { ScratchCardModal } from '@/components/scratch-card-modal';
 import { GameStats } from '@/components/game-stats';
 import { RecentWinners } from '@/components/recent-winners';
-import logoPath from '@assets/ChatGPT Image 28 juil. 2025, 10_17_36_1753690663892.png';
+import logoPath from '@assets/revealx-logo.png';
 import { SiX } from 'react-icons/si';
 
 export default function Home() {
@@ -42,11 +42,11 @@ export default function Home() {
           <Link href="/">
             <div className="flex items-center space-x-4 cursor-pointer hover:opacity-80 transition-opacity duration-200">
               <div className="w-16 h-16 bg-gradient-to-br from-neon-cyan to-neon-orange rounded-lg flex items-center justify-center border-2 border-neon-cyan shadow-neon-cyan">
-                <img src={logoPath} alt="Scratch 'n SOL" className="w-12 h-12 object-contain" />
+                <img src={logoPath} alt="RevealX" className="w-12 h-12 object-contain" />
               </div>
               <div className="hidden sm:block">
-                <h1 className="text-2xl font-black text-neon-cyan">SCRATCH</h1>
-                <h2 className="text-xl font-bold text-neon-orange">'n {nativeCurrency}</h2>
+                <h1 className="text-2xl font-black text-neon-cyan">REVEALX</h1>
+                <h2 className="text-xl font-bold text-neon-orange">Multi-Chain</h2>
               </div>
             </div>
           </Link>
@@ -64,7 +64,7 @@ export default function Home() {
           {/* Social Media, Chain Selector, Mode Toggle and Wallet Connection */}
           <div className="flex items-center space-x-3 lg:ml-auto">
             <a 
-              href="https://x.com/scratchnsol" 
+              href="https://x.com/revealxfun" 
               target="_blank" 
               rel="noopener noreferrer"
               className="p-2 rounded-lg bg-neon-cyan/10 hover:bg-neon-cyan/20 border border-neon-cyan/30 hover:border-neon-cyan/50 transition-all duration-200 hover:shadow-neon-cyan group"

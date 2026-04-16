@@ -12,7 +12,7 @@ import { useWallet, useConnection } from '@solana/wallet-adapter-react';
 import { useWalletModal } from '@solana/wallet-adapter-react-ui';
 import { purchaseTicket } from '@/lib/solana-transactions';
 import { getUserStatsManager } from '@/lib/user-stats';
-import scratchNSolLogo from '@assets/ChatGPT Image 28 juil. 2025, 10_17_36_1753690663892.png';
+import revealxLogo from '@assets/revealx-logo.png';
 import { useChain, useChainConfig } from '@/contexts/chain-context';
 import { useAccount, useChainId } from 'wagmi';
 import { useBasePurchase } from '@/hooks/use-base-purchase';
@@ -623,12 +623,12 @@ export function ScratchCardModal({
             {cardDesign.name} TIER
           </div>
           <img
-            src={scratchNSolLogo}
-            alt="Scratch 'n SOL"
+            src={revealxLogo}
+            alt="RevealX"
             className="w-16 h-16 mx-auto mb-2 rounded-lg"
           />
           <div className="text-lg font-black text-white mb-2">
-            SCRATCH 'N {nativeCurrency}
+            REVEALX
           </div>
           <div className={`text-2xl font-black ${cardDesign.accentColor} mb-2`}>
             {formatAmount(ticketCost)}

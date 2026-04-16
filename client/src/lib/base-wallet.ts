@@ -15,8 +15,8 @@ export const baseConfig = createConfig({
   chains: [base, baseSepolia],
   connectors: [
     coinbaseWallet({ 
-      appName: 'Scratch n SOL',
-      appLogoUrl: 'https://scratchnsol.com/logo.png', // Update with your logo
+      appName: 'RevealX',
+      appLogoUrl: 'https://revealx.fun/assets/revealx-logo.png',
       preference: 'all', // Support both smart wallets and EOA
     }),
     injected({ 
@@ -25,10 +25,10 @@ export const baseConfig = createConfig({
     walletConnect({ 
       projectId: import.meta.env.VITE_WC_PROJECT_ID || '',
       metadata: {
-        name: 'Scratch n SOL',
+        name: 'RevealX',
         description: 'Multi-chain scratch card casino on Solana and Base',
-        url: 'https://scratchnsol.com',
-        icons: ['https://scratchnsol.com/logo.png'],
+        url: 'https://revealx.fun',
+        icons: ['https://revealx.fun/assets/revealx-logo.png'],
       },
     }),
   ],
