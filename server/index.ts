@@ -67,18 +67,19 @@ app.get("/health", (_req, res) => {
 (async () => {
   const server = await registerRoutes(app);
 
-  // Global error handler - must be after routes
-  app.use(errorHandler);
-  
-  // 404 handler - must be last
-  app.use(notFoundHandler);
-
   // Setup vite in development, static files in production
+  // MUST be before error handlers so it can serve index.html
   if (app.get("env") === "development") {
     await setupVite(app, server);
   } else {
     serveStatic(app);
   }
+
+  // Global error handler - must be after routes and static files
+  app.use(errorHandler);
+  
+  // 404 handler - must be last
+  app.use(notFoundHandler);
 
   const port = parseInt(process.env.PORT || "5000", 10);
   server.listen({
