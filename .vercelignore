@@ -1,5 +1,6 @@
 # Ignore server source files (not needed for static build)
 server/
+api/
 
 # Ignore dev files
 node_modules
