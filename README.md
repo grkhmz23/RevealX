@@ -176,13 +176,13 @@ The app will be available at `http://localhost:5000`.
 
 ### Ticket Tiers
 
-| Tier | Solana (SOL) | Base (USDC) | Max Win |
-|------|--------------|-------------|---------|
-| Bronze | 0.1 | 1 | 1× / 10× |
-| Silver | 0.2 | 2 | 2× / 20× |
-| Gold | 0.5 | 5 | 5× / 50× |
-| Platinum | 0.75 | 10 | 7.5× / 100× |
-| Diamond | 1.0 | 25 | 10× / 250× |
+| Tier | Solana | Base | Max Win |
+|------|--------|------|---------|
+| Bronze | $1 | $1 | 10× |
+| Silver | $2 | $2 | 20× |
+| Gold | $5 | $5 | 50× |
+| Platinum | $10 | $10 | 100× |
+| Diamond | $25 | $25 | 250× |
 
 ### Game Flow (Real Mode)
 

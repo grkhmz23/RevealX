@@ -115,7 +115,7 @@ const getCardDesign = (ticketCost: number) => {
       bgPattern: "bg-gradient-to-br from-cyan-900/20 to-blue-900/30",
     }
   };
-  return designs[ticketCost] || designs[0.1];
+  return designs[ticketCost] || designs[1];
 };
 
 // Pool Info Component
@@ -473,8 +473,7 @@ export function ScratchCardModal({
         const statsManager = getUserStatsManager(playerWallet);
         if (statsManager) {
           const cardTypeMap: Record<number, string> = {
-            0.1: 'bronze', 0.2: 'silver', 0.5: 'gold', 0.75: 'platinum',
-            1: 'diamond', 2: 'silver', 5: 'gold', 10: 'platinum', 25: 'diamond',
+            1: 'bronze', 2: 'silver', 5: 'gold', 10: 'platinum', 25: 'diamond',
           };
 
           statsManager.recordGamePlay({

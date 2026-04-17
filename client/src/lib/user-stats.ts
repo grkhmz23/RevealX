@@ -152,11 +152,11 @@ export function formatGameDate(timestamp: number): string {
 // Get card type display name
 export function getCardTypeDisplay(cardType: string): string {
   const typeMap: Record<string, string> = {
-    'bronze': 'Bronze (0.1 SOL)',
-    'silver': 'Silver (0.2 SOL)',
-    'gold': 'Gold (0.5 SOL)',
-    'platinum': 'Platinum (0.75 SOL)',
-    'diamond': 'Diamond (1.0 SOL)'
+    'bronze': 'Bronze ($1)',
+    'silver': 'Silver ($2)',
+    'gold': 'Gold ($5)',
+    'platinum': 'Platinum ($10)',
+    'diamond': 'Diamond ($25)'
   };
   return typeMap[cardType] || cardType;
 }

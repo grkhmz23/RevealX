@@ -19,10 +19,10 @@ import { randomUUID } from "crypto";
 const solanaService = new SolanaService();
 const baseService = getBaseService();
 
-// Valid ticket costs per chain
+// Valid ticket costs per chain — unified to USDC-denominated values for investor demo
 const VALID_TICKET_COSTS: Record<ChainType, number[]> = {
-  solana: [0.1, 0.2, 0.5, 0.75, 1.0],
-  base: [1, 2, 5, 10, 25], // USDC amounts
+  solana: [1, 2, 5, 10, 25],
+  base: [1, 2, 5, 10, 25],
 };
 
 export async function registerRoutes(app: Express): Promise<Server> {
@@ -219,7 +219,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       // Check payout limits
-      const SECURITY_LIMITS = { MAX_SINGLE_PAYOUT_SOL: 10, MAX_SINGLE_PAYOUT_BASE: 250, MAX_HOURLY_PAYOUT: 50, MAX_DAILY_PAYOUT: 200 };
+      const SECURITY_LIMITS = { MAX_SINGLE_PAYOUT_SOL: 250, MAX_SINGLE_PAYOUT_BASE: 250, MAX_HOURLY_PAYOUT: 500, MAX_DAILY_PAYOUT: 2000 };
       const maxPayout = chain === 'solana' ? SECURITY_LIMITS.MAX_SINGLE_PAYOUT_SOL : SECURITY_LIMITS.MAX_SINGLE_PAYOUT_BASE; // 250 USDC max on Base
       if (requestedWin > maxPayout) {
         throw new APIError(

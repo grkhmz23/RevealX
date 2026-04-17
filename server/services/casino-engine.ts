@@ -28,17 +28,18 @@ interface WinCalculation {
 export class CasinoEngine {
   private config: CasinoConfig = {
     houseEdge: 0.10, // 10% house edge
-    minPoolReserve: 0.5, // Keep 0.5 SOL minimum
+    minPoolReserve: 25, // Keep minimum reserve aligned with unified ticket costs
     maxPayoutRatio: 0.25, // Max payout = 25% of pool
   };
 
   // Base win rates by ticket tier (lower tiers = higher win rates)
+  // Unified to USDC-denominated values for both chains
   private baseWinRates: Record<number, number> = {
-    0.1: 0.25, // 25% - Bronze
-    0.2: 0.22, // 22% - Silver  
-    0.5: 0.20, // 20% - Gold
-    0.75: 0.18, // 18% - Platinum
-    1.0: 0.15, // 15% - Diamond
+    1: 0.25,  // 25% - Bronze
+    2: 0.22,  // 22% - Silver
+    5: 0.20,  // 20% - Gold
+    10: 0.18, // 18% - Platinum
+    25: 0.15, // 15% - Diamond
   };
 
   calculateWin(ticketCost: number, poolBalance: number): WinCalculation {

@@ -2,9 +2,6 @@ import { useQuery } from '@tanstack/react-query';
 import { Card, CardContent } from '@/components/ui/card';
 import { useChain, useChainConfig } from '@/contexts/chain-context';
 
-// Base pool offset for display purposes
-const BASE_POOL_DISPLAY_OFFSET = 150;
-
 export function GameStats() {
   const { selectedChain } = useChain();
   const { formatAmount } = useChainConfig();
@@ -19,8 +16,7 @@ export function GameStats() {
     refetchInterval: 30000,
   });
 
-  const actualPool = parseFloat((stats as any)?.totalPool || '0');
-  const displayPool = actualPool + BASE_POOL_DISPLAY_OFFSET;
+  const displayPool = parseFloat((stats as any)?.totalPool || '0');
 
   return (
     <section className="mb-12">

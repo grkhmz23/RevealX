@@ -165,13 +165,13 @@ export type InsertLpPosition = z.infer<typeof insertLpPositionSchema>;
 // Chain types
 export type ChainType = 'solana' | 'base';
 
-// Ticket tiers for Solana (SOL)
+// Ticket tiers for Solana — unified with Base pricing (denominated in SOL for v1 off-chain flow)
 export const solanaTicketTypes = [
-  { cost: 0.1, maxWin: 1, label: 'Bronze' },
-  { cost: 0.2, maxWin: 2, label: 'Silver' },
-  { cost: 0.5, maxWin: 5, label: 'Gold' },
-  { cost: 0.75, maxWin: 7.5, label: 'Platinum' },
-  { cost: 1.0, maxWin: 10, label: 'Diamond' },
+  { cost: 1, maxWin: 10, label: 'Bronze', currency: 'SOL' },
+  { cost: 2, maxWin: 20, label: 'Silver', currency: 'SOL' },
+  { cost: 5, maxWin: 50, label: 'Gold', currency: 'SOL' },
+  { cost: 10, maxWin: 100, label: 'Platinum', currency: 'SOL' },
+  { cost: 25, maxWin: 250, label: 'Diamond', currency: 'SOL' },
 ] as const;
 
 // Ticket tiers for Base (USDC) - stable USD values

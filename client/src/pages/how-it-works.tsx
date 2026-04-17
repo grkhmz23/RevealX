@@ -326,31 +326,31 @@ export default function HowItWorks() {
                   <tbody className="text-gray-300">
                     <tr className="border-b border-gray-800">
                       <td className="py-2 pr-4 font-semibold text-amber-500">Bronze</td>
-                      <td className="py-2 pr-4">0.1 SOL</td>
+                      <td className="py-2 pr-4">$1 USDC</td>
                       <td className="py-2 pr-4">$1 USDC</td>
                       <td className="py-2">10×</td>
                     </tr>
                     <tr className="border-b border-gray-800">
                       <td className="py-2 pr-4 font-semibold text-slate-400">Silver</td>
-                      <td className="py-2 pr-4">0.2 SOL</td>
+                      <td className="py-2 pr-4">$2 USDC</td>
                       <td className="py-2 pr-4">$2 USDC</td>
                       <td className="py-2">20×</td>
                     </tr>
                     <tr className="border-b border-gray-800">
                       <td className="py-2 pr-4 font-semibold text-yellow-400">Gold</td>
-                      <td className="py-2 pr-4">0.5 SOL</td>
+                      <td className="py-2 pr-4">$5 USDC</td>
                       <td className="py-2 pr-4">$5 USDC</td>
                       <td className="py-2">50×</td>
                     </tr>
                     <tr className="border-b border-gray-800">
                       <td className="py-2 pr-4 font-semibold text-cyan-300">Platinum</td>
-                      <td className="py-2 pr-4">0.75 SOL</td>
+                      <td className="py-2 pr-4">$10 USDC</td>
                       <td className="py-2 pr-4">$10 USDC</td>
                       <td className="py-2">100×</td>
                     </tr>
                     <tr>
                       <td className="py-2 pr-4 font-semibold text-purple-400">Diamond</td>
-                      <td className="py-2 pr-4">1.0 SOL</td>
+                      <td className="py-2 pr-4">$25 USDC</td>
                       <td className="py-2 pr-4">$25 USDC</td>
                       <td className="py-2">250×</td>
                     </tr>

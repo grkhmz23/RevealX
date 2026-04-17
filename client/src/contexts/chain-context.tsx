@@ -83,32 +83,23 @@ export function useChain(): ChainContextType {
 export function useChainConfig() {
   const { selectedChain, isSolana, isBase } = useChain()
 
-  const ticketTiers = isSolana
-    ? [
-        { cost: 0.1, maxWin: 1, label: 'Bronze' },
-        { cost: 0.2, maxWin: 2, label: 'Silver' },
-        { cost: 0.5, maxWin: 5, label: 'Gold' },
-        { cost: 0.75, maxWin: 7.5, label: 'Platinum' },
-        { cost: 1.0, maxWin: 10, label: 'Diamond' },
-      ]
-    : [
-        { cost: 1, maxWin: 10, label: 'Bronze' },      // $1 USDC
-        { cost: 2, maxWin: 20, label: 'Silver' },      // $2 USDC
-        { cost: 5, maxWin: 50, label: 'Gold' },        // $5 USDC
-        { cost: 10, maxWin: 100, label: 'Platinum' },  // $10 USDC
-        { cost: 25, maxWin: 250, label: 'Diamond' },   // $25 USDC
-      ]
+  const ticketTiers = [
+    { cost: 1, maxWin: 10, label: 'Bronze' },
+    { cost: 2, maxWin: 20, label: 'Silver' },
+    { cost: 5, maxWin: 50, label: 'Gold' },
+    { cost: 10, maxWin: 100, label: 'Platinum' },
+    { cost: 25, maxWin: 250, label: 'Diamond' },
+  ]
 
   const formatAmount = (amount: number) => {
-    return isSolana 
-      ? `${amount.toFixed(2)} SOL`
-      : `${amount.toFixed(0)} USDC`
+    // Unified display for investor demo: both chains show USDC-denominated values
+    return `${amount.toFixed(0)} USDC`
   }
 
   return {
     ticketTiers,
     formatAmount,
-    minBet: isSolana ? 0.1 : 1,      // 0.1 SOL or 1 USDC
-    maxBet: isSolana ? 1.0 : 25,     // 1 SOL or 25 USDC
+    minBet: 1,
+    maxBet: 25,
   }
 }
