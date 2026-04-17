@@ -74,6 +74,76 @@ export const insertJackpotPurchaseSchema = createInsertSchema(jackpotPurchases).
   createdAt: true,
 });
 
+// v2 Campaigns
+export const campaigns = pgTable("campaigns", {
+  id: varchar("id").primaryKey(), // bytes32 campaignId
+  creator: text("creator").notNull(),
+  creatorShareBps: integer("creator_share_bps").notNull().default(0),
+  tier: integer("tier").notNull().default(0),
+  brandingURI: text("branding_uri").notNull().default(""),
+  maxPlays: integer("max_plays").notNull().default(0),
+  expiry: timestamp("expiry").notNull(),
+  totalPlays: integer("total_plays").notNull().default(0),
+  totalWagered: decimal("total_wagered", { precision: 24, scale: 6 }).notNull().default("0"),
+  totalPayout: decimal("total_payout", { precision: 24, scale: 6 }).notNull().default("0"),
+  creatorFeesEarned: decimal("creator_fees_earned", { precision: 24, scale: 6 }).notNull().default("0"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+export const campaignPlays = pgTable("campaign_plays", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  campaignId: varchar("campaign_id").notNull(),
+  player: text("player").notNull(),
+  tier: integer("tier").notNull().default(0),
+  wager: decimal("wager", { precision: 24, scale: 6 }).notNull().default("0"),
+  payout: decimal("payout", { precision: 24, scale: 6 }).notNull().default("0"),
+  requestId: text("request_id").notNull().default(""),
+  blockNumber: integer("block_number").notNull().default(0),
+  txHash: text("tx_hash").notNull().default(""),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const indexerState = pgTable("indexer_state", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  chain: varchar("chain", { length: 20 }).notNull().unique(),
+  lastIndexedBlock: integer("last_indexed_block").notNull().default(0),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+export const lpPositions = pgTable("lp_positions", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  lpAddress: text("lp_address").notNull(),
+  chain: varchar("chain", { length: 20 }).notNull().default("base"),
+  shareBalance: decimal("share_balance", { precision: 24, scale: 6 }).notNull().default("0"),
+  depositedUsdc: decimal("deposited_usdc", { precision: 24, scale: 6 }).notNull().default("0"),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+export const insertCampaignSchema = createInsertSchema(campaigns).omit({
+  totalPlays: true,
+  totalWagered: true,
+  totalPayout: true,
+  creatorFeesEarned: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertCampaignPlaySchema = createInsertSchema(campaignPlays).omit({
+  id: true,
+  createdAt: true,
+});
+
+export const insertIndexerStateSchema = createInsertSchema(indexerState).omit({
+  id: true,
+  updatedAt: true,
+});
+
+export const insertLpPositionSchema = createInsertSchema(lpPositions).omit({
+  id: true,
+  updatedAt: true,
+});
+
 export type InsertGame = z.infer<typeof insertGameSchema>;
 export type Game = typeof games.$inferSelect;
 export type InsertGameStats = z.infer<typeof insertGameStatsSchema>;
@@ -82,6 +152,15 @@ export type ChainStats = typeof chainStats.$inferSelect;
 export type InsertChainStats = z.infer<typeof insertChainStatsSchema>;
 export type JackpotPurchase = typeof jackpotPurchases.$inferSelect;
 export type InsertJackpotPurchase = z.infer<typeof insertJackpotPurchaseSchema>;
+
+export type Campaign = typeof campaigns.$inferSelect;
+export type InsertCampaign = z.infer<typeof insertCampaignSchema>;
+export type CampaignPlay = typeof campaignPlays.$inferSelect;
+export type InsertCampaignPlay = z.infer<typeof insertCampaignPlaySchema>;
+export type IndexerState = typeof indexerState.$inferSelect;
+export type InsertIndexerState = z.infer<typeof insertIndexerStateSchema>;
+export type LpPosition = typeof lpPositions.$inferSelect;
+export type InsertLpPosition = z.infer<typeof insertLpPositionSchema>;
 
 // Chain types
 export type ChainType = 'solana' | 'base';

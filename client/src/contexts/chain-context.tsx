@@ -16,6 +16,7 @@ interface ChainContextType {
   isBase: boolean
   chainName: string
   nativeCurrency: string
+  isV2Enabled: boolean
 }
 
 const ChainContext = createContext<ChainContextType | undefined>(undefined)
@@ -45,6 +46,9 @@ export function ChainProvider({ children }: ChainProviderProps) {
   const chainName = isSolana ? 'Solana' : 'Base'
   const nativeCurrency = isSolana ? 'SOL' : 'USDC'
 
+  // v2 toggle: Base defaults to v2 when VITE_V2_ENABLED_BASE=true
+  const isV2Enabled = isBase && import.meta.env.VITE_V2_ENABLED_BASE === 'true'
+
   // Log chain changes for debugging
   useEffect(() => {
     console.log(`[ChainContext] Switched to ${selectedChain}`)
@@ -57,6 +61,7 @@ export function ChainProvider({ children }: ChainProviderProps) {
     isBase,
     chainName,
     nativeCurrency,
+    isV2Enabled,
   }
 
   return (

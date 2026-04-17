@@ -175,7 +175,7 @@ contract GameManager is VRFConsumerBaseV2Plus {
         ) = campaignRegistry.getCampaign(game.campaignId);
 
         uint256 poolBalance = revealXPool.totalAssets();
-        (bool isWin, uint256 payout) = _resolveOutcome(randomWords[0], config.tier, poolBalance, game.wager);
+        (, uint256 payout) = _resolveOutcome(randomWords[0], config.tier, poolBalance, game.wager);
 
         // Settle with pool (payout may be 0 for losses)
         revealXPool.settleWin(

@@ -19,6 +19,8 @@ A multi-chain scratch card casino platform built on **Solana** and **Base**. Use
 - **Automatic Payouts** — Winnings sent directly to the player's wallet on-chain
 - **Provably Fair Engine** — Server-side outcome generation with configurable house edge and pool-aware win rates
 - **Secure by Design** — Rate limiting, idempotency keys, input sanitization, CORS restrictions, and payout caps
+- **Creator Dashboard** — Launch branded scratch card campaigns with custom share splits
+- **LP Pool (ERC-4626)** — Deposit USDC into RevealXPool, earn yield from protocol fees
 - **Unified Full-Stack Deploy** — Single Render service hosts both the React frontend and Express API
 
 ---
@@ -65,7 +67,32 @@ A multi-chain scratch card casino platform built on **Solana** and **Base**. Use
 | **Database** | PostgreSQL with Drizzle ORM |
 | **Solana** | `@solana/web3.js`, `@solana/wallet-adapter-react` |
 | **Base** | `wagmi`, `viem`, WalletConnect |
+| **Smart Contracts** | Foundry, OpenZeppelin, Chainlink VRF v2.5 |
 | **Deployment** | Render (full-stack single service) |
+
+### Base v2 Contracts
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                        Base v2 (EVM)                        │
+│  ┌──────────────────┐  ┌──────────────────┐                │
+│  │ CampaignRegistry │  │   RevealXPool    │                │
+│  │   (Creators)     │  │  (ERC-4626 LP)   │                │
+│  └────────┬─────────┘  └────────┬─────────┘                │
+│           │                     │                           │
+│           └──────────┬──────────┘                           │
+│                      ▼                                      │
+│            ┌─────────────────┐                             │
+│            │   GameManager   │                             │
+│            │ (VRF Consumer)  │                             │
+│            └────────┬────────┘                             │
+│                     ▼                                       │
+│         ┌───────────────────────┐                          │
+│         │ Chainlink VRF v2.5    │                          │
+│         │ (Provable Randomness) │                          │
+│         └───────────────────────┘                          │
+└─────────────────────────────────────────────────────────────┘
+```
 
 ---
 
@@ -108,6 +135,22 @@ VITE_TEAM_WALLET=your_team_public_key
 BASE_POOL_PRIVATE_KEY=0x_your_64_char_hex_private_key
 BASE_RPC_URL=https://mainnet.base.org
 VITE_BASE_POOL_WALLET=0x_your_pool_address
+
+# Base v2 Contracts
+DEPLOYER_PRIVATE_KEY=0x...
+OWNER_ADDRESS=0x...
+FEE_RECIPIENT=0x...
+USDC_ADDRESS=0x036CbD53842c5426634e7929541eC2318f3dCF7e
+VRF_COORDINATOR=0x5C210eF41CD1a72de73bF76eC39637bB0d3d7BEE
+VRF_SUBSCRIPTION_ID=1234
+VRF_KEY_HASH=0x9e1344a1247c8a1785d0a4681a27152bffdb43666ae5bf7d14d24a5efd44bf71
+BASESCAN_API_KEY=
+ENABLE_INDEXER=false
+PINATA_JWT=
+VITE_V2_ENABLED_BASE=false
+VITE_CAMPAIGN_REGISTRY_ADDRESS=0x...
+VITE_GAME_MANAGER_ADDRESS=0x...
+VITE_REVEALX_POOL_ADDRESS=0x...
 
 # Security
 SESSION_SECRET=$(openssl rand -base64 32)
@@ -198,6 +241,71 @@ The game engine enforces sustainable operation via:
 | `GET` | `/api/games/:wallet` | Player game history |
 | `POST` | `/api/pool/check` | Check if pool can support a ticket cost |
 | `POST` | `/api/rpc-proxy` | Proxy RPC requests to Solana |
+| `GET` | `/api/campaigns` | List all v2 campaigns |
+| `GET` | `/api/campaigns/:id` | Get campaign details |
+| `GET` | `/api/campaigns/:id/plays` | Get plays for a campaign |
+| `GET` | `/api/pool/v2` | Get v2 pool TVL and max payout |
+
+---
+
+## 🔄 RevealX v2 Architecture
+
+RevealX v2 repositions the platform from a simple multi-chain casino to a **creator-launched on-chain scratch card ecosystem** with a shared liquidity pool and verifiable randomness.
+
+### What's New in v2
+
+- **On-Chain Trust Layer (Base)**: All v2 games run through audited Solidity contracts using Chainlink VRF v2.5 for provably fair randomness.
+- **Shared LP Pool (`RevealXPool.sol`)**: ERC-4626 vault accepting USDC. LPs deposit USDC, mint `rvlxUSDC` shares, and earn yield from protocol fees (30% of net house edge).
+- **Creator Dashboard**: Anyone can launch a branded scratch card campaign, set revenue share, max plays, and expiry. Creators earn a configurable share of protocol fees.
+- **Indexer Worker**: A background worker polls Base for `CampaignCreated` and `GameSettled` events, syncing on-chain data into Postgres for fast dashboard queries.
+- **Solana v1 Remains Active**: Existing Solana scratch card games continue operating on the off-chain engine during the v2 rollout.
+
+### v2 Contract Flow
+
+```
+Creator ──► CampaignRegistry.createCampaign()
+                │
+LP ──► RevealXPool.deposit(USDC) ──► mint rvlxUSDC
+                │
+Player ──► GameManager.playCard() ──► VRF request
+                │
+Chainlink ──► fulfillRandomWords() ──► settleWin()
+                │
+        RevealXPool.settleWin() ──► payout winner
+                │
+        CampaignRegistry.incrementPlayCount()
+```
+
+### v2 Deployment Steps
+
+1. **Deploy contracts to Base Sepolia**:
+   ```bash
+   cd contracts/base
+   source ../../.env
+   forge script script/Deploy.s.sol --rpc-url https://sepolia.base.org --broadcast --verify
+   ```
+2. **Add `GameManager` as a VRF consumer** at https://vrf.chain.link
+3. **Set contract addresses in `.env`**:
+   ```env
+   V2_REVEALX_POOL_ADDRESS=0x...
+   V2_CAMPAIGN_REGISTRY_ADDRESS=0x...
+   V2_GAME_MANAGER_ADDRESS=0x...
+   VITE_REVEALX_POOL_ADDRESS=0x...
+   VITE_CAMPAIGN_REGISTRY_ADDRESS=0x...
+   VITE_GAME_MANAGER_ADDRESS=0x...
+   ```
+4. **Enable the indexer**:
+   ```env
+   ENABLE_INDEXER=true
+   ```
+5. **Run database migration**:
+   ```bash
+   npm run db:push
+   ```
+6. **Start the app**:
+   ```bash
+   npm run dev
+   ```
 
 ---
 
@@ -242,6 +350,9 @@ The Express server serves the built React app from `dist/public` and handles all
 │   └── utils/               # Retry helpers, validators
 ├── shared/
 │   └── schema.ts            # Drizzle ORM schemas and Zod types
+├── contracts/base/          # Foundry project for Base v2 contracts
+│   ├── src/                 # RevealXPool, CampaignRegistry, GameManager
+│   └── test/                # Unit & fork tests
 ├── dist/
 │   ├── public/              # Vite build output (served by Express)
 │   └── index.js             # Bundled server for production

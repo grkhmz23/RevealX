@@ -53,6 +53,16 @@ export default function Home() {
 
           {/* Navigation */}
           <div className="hidden lg:flex items-center space-x-4 flex-1 justify-center">
+            <Link href="/pool">
+              <a className="px-4 py-2 bg-gradient-to-r from-neon-purple/20 to-neon-cyan/20 hover:from-neon-purple/30 hover:to-neon-cyan/30 border border-neon-purple/50 hover:border-neon-purple rounded-lg font-bold text-neon-purple hover:text-white transition-all duration-200">
+                Pool
+              </a>
+            </Link>
+            <Link href="/creator">
+              <a className="px-4 py-2 bg-gradient-to-r from-neon-cyan/20 to-neon-orange/20 hover:from-neon-cyan/30 hover:to-neon-orange/30 border border-neon-cyan/50 hover:border-neon-cyan rounded-lg font-bold text-neon-cyan hover:text-white transition-all duration-200">
+                Creator
+              </a>
+            </Link>
             {/* Bags Jackpot hidden temporarily */}
             {/*
             <Link href="/bags-jackpot">
@@ -82,14 +92,26 @@ export default function Home() {
         </div>
       </header>
 
-      {/* Token Launch Banner */}
+      {/* v2 Banner */}
       <div className="bg-gradient-to-r from-neon-cyan/10 via-neon-purple/10 to-neon-orange/10 border-b border-neon-cyan/20">
         <div className="max-w-7xl mx-auto px-4 py-3">
-          <div className="flex items-center justify-center">
-            <div className="px-6 py-2 bg-neon-cyan/10 border border-neon-cyan/30 rounded-lg">
-              <span className="text-lg font-bold text-neon-cyan animate-pulse" data-testid="text-launching-soon">
-                🚀 Now on {chainName}!
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
+            <div className="px-4 py-2 bg-neon-cyan/10 border border-neon-cyan/30 rounded-lg">
+              <span className="text-base font-bold text-neon-cyan animate-pulse">
+                🚀 RevealX v2 is live on Base!
               </span>
+            </div>
+            <div className="flex items-center gap-2">
+              <Link href="/pool">
+                <a className="px-4 py-2 bg-neon-purple/10 border border-neon-purple/30 hover:bg-neon-purple/20 rounded-lg text-sm font-bold text-neon-purple transition-colors">
+                  LP Pool
+                </a>
+              </Link>
+              <Link href="/creator">
+                <a className="px-4 py-2 bg-neon-orange/10 border border-neon-orange/30 hover:bg-neon-orange/20 rounded-lg text-sm font-bold text-neon-orange transition-colors">
+                  Creator Dashboard
+                </a>
+              </Link>
             </div>
           </div>
         </div>

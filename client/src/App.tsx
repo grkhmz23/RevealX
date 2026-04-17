@@ -5,13 +5,22 @@ import { AppProviders } from "@/components/providers";
 import Home from "@/pages/home";
 import NotFound from "@/pages/not-found";
 import Dashboard from "@/pages/dashboard";
-
+import Creator from "@/pages/creator";
+import CreatorNew from "@/pages/creator-new";
+import CreatorDetail from "@/pages/creator-detail";
+import PlayCampaign from "@/pages/play-campaign";
+import Pool from "@/pages/pool";
 
 function Router() {
   return (
     <Switch>
       <Route path="/" component={Home} />
       <Route path="/dashboard" component={Dashboard} />
+      <Route path="/creator" component={Creator} />
+      <Route path="/creator/new" component={CreatorNew} />
+      <Route path="/creator/:campaignId" component={CreatorDetail} />
+      <Route path="/play/:campaignId" component={PlayCampaign} />
+      <Route path="/pool" component={Pool} />
       {/* <Route path="/bags-jackpot" component={BagsJackpot} /> */}
       <Route component={NotFound} />
     </Switch>

@@ -1,7 +1,7 @@
-import { type Game, type InsertGame, type GameStats, type InsertGameStats, type ChainStats, type InsertChainStats, type ChainType } from "@shared/schema";
-import { games, gameStats, chainStats } from "@shared/schema";
+import { type Game, type InsertGame, type GameStats, type InsertGameStats, type ChainStats, type InsertChainStats, type ChainType, type Campaign, type InsertCampaign, type CampaignPlay, type InsertCampaignPlay, type IndexerState, type InsertIndexerState, type LpPosition, type InsertLpPosition } from "@shared/schema";
+import { games, gameStats, chainStats, campaigns, campaignPlays, indexerState, lpPositions } from "@shared/schema";
 import { db } from "./db";
-import { eq, desc, and } from "drizzle-orm";
+import { eq, desc, and, sql as drizzleSql } from "drizzle-orm";
 import { randomUUID } from "crypto";
 
 export interface IStorage {
@@ -24,6 +24,26 @@ export interface IStorage {
   getChainStats(chain: ChainType): Promise<ChainStats | undefined>;
   updateChainStats(chain: ChainType, stats: Partial<InsertChainStats>): Promise<void>;
   incrementChainStats(chain: ChainType, isWin: boolean, winAmount?: string): Promise<void>;
+
+  // v2 Campaign operations
+  upsertCampaign(campaign: InsertCampaign): Promise<Campaign>;
+  getCampaign(id: string): Promise<Campaign | undefined>;
+  getCampaigns(): Promise<Campaign[]>;
+  incrementCampaignStats(id: string, wager: string, payout: string, creatorFee: string): Promise<void>;
+
+  // v2 Campaign plays
+  createCampaignPlay(play: InsertCampaignPlay): Promise<CampaignPlay>;
+  getCampaignPlays(campaignId: string, limit?: number, offset?: number): Promise<CampaignPlay[]>;
+  getCampaignPlaysSince(since: Date): Promise<CampaignPlay[]>;
+
+  // v2 Indexer state
+  getIndexerState(chain: string): Promise<IndexerState | undefined>;
+  updateIndexerState(chain: string, lastIndexedBlock: number): Promise<void>;
+
+  // v2 LP positions
+  upsertLpPosition(position: InsertLpPosition): Promise<LpPosition>;
+  getLpPosition(lpAddress: string, chain: string): Promise<LpPosition | undefined>;
+  getLpPositions(chain: string): Promise<LpPosition[]>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -178,6 +198,149 @@ export class DatabaseStorage implements IStorage {
         updatedAt: new Date(),
       });
     }
+  }
+
+  /*//////////////////////////////////////////////////////////////
+                          v2 CAMPAIGN OPERATIONS
+  //////////////////////////////////////////////////////////////*/
+
+  async upsertCampaign(campaign: InsertCampaign): Promise<Campaign> {
+    const existing = await this.getCampaign(campaign.id);
+    if (existing) {
+      const [updated] = await db
+        .update(campaigns)
+        .set({
+          ...campaign,
+          updatedAt: new Date(),
+        })
+        .where(eq(campaigns.id, campaign.id))
+        .returning();
+      return updated;
+    }
+    const [inserted] = await db
+      .insert(campaigns)
+      .values({
+        ...campaign,
+        totalPlays: 0,
+        totalWagered: "0",
+        totalPayout: "0",
+        creatorFeesEarned: "0",
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      })
+      .returning();
+    return inserted;
+  }
+
+  async getCampaign(id: string): Promise<Campaign | undefined> {
+    const [row] = await db.select().from(campaigns).where(eq(campaigns.id, id));
+    return row || undefined;
+  }
+
+  async getCampaigns(): Promise<Campaign[]> {
+    return await db.select().from(campaigns).orderBy(desc(campaigns.createdAt));
+  }
+
+  async incrementCampaignStats(id: string, wager: string, payout: string, creatorFee: string): Promise<void> {
+    const existing = await this.getCampaign(id);
+    if (!existing) return;
+    await db
+      .update(campaigns)
+      .set({
+        totalPlays: existing.totalPlays + 1,
+        totalWagered: (BigInt(existing.totalWagered) + BigInt(wager)).toString(),
+        totalPayout: (BigInt(existing.totalPayout) + BigInt(payout)).toString(),
+        creatorFeesEarned: (BigInt(existing.creatorFeesEarned) + BigInt(creatorFee)).toString(),
+        updatedAt: new Date(),
+      })
+      .where(eq(campaigns.id, id));
+  }
+
+  async createCampaignPlay(play: InsertCampaignPlay): Promise<CampaignPlay> {
+    const [inserted] = await db
+      .insert(campaignPlays)
+      .values({
+        ...play,
+        createdAt: new Date(),
+      })
+      .returning();
+    return inserted;
+  }
+
+  async getCampaignPlays(campaignId: string, limit: number = 50, offset: number = 0): Promise<CampaignPlay[]> {
+    return await db
+      .select()
+      .from(campaignPlays)
+      .where(eq(campaignPlays.campaignId, campaignId))
+      .orderBy(desc(campaignPlays.createdAt))
+      .limit(limit)
+      .offset(offset);
+  }
+
+  async getCampaignPlaysSince(since: Date): Promise<CampaignPlay[]> {
+    return await db
+      .select()
+      .from(campaignPlays)
+      .where(drizzleSql`${campaignPlays.createdAt} >= ${since.toISOString()}`)
+      .orderBy(desc(campaignPlays.createdAt));
+  }
+
+  async getIndexerState(chain: string): Promise<IndexerState | undefined> {
+    const [row] = await db.select().from(indexerState).where(eq(indexerState.chain, chain));
+    return row || undefined;
+  }
+
+  async updateIndexerState(chain: string, lastIndexedBlock: number): Promise<void> {
+    const existing = await this.getIndexerState(chain);
+    if (existing) {
+      await db
+        .update(indexerState)
+        .set({ lastIndexedBlock, updatedAt: new Date() })
+        .where(eq(indexerState.id, existing.id));
+    } else {
+      await db.insert(indexerState).values({
+        id: randomUUID(),
+        chain,
+        lastIndexedBlock,
+        updatedAt: new Date(),
+      });
+    }
+  }
+
+  async upsertLpPosition(position: InsertLpPosition): Promise<LpPosition> {
+    const existing = await this.getLpPosition(position.lpAddress!, position.chain!);
+    if (existing) {
+      const [updated] = await db
+        .update(lpPositions)
+        .set({
+          shareBalance: position.shareBalance,
+          depositedUsdc: position.depositedUsdc,
+          updatedAt: new Date(),
+        })
+        .where(eq(lpPositions.id, existing.id))
+        .returning();
+      return updated;
+    }
+    const [inserted] = await db
+      .insert(lpPositions)
+      .values({
+        ...position,
+        updatedAt: new Date(),
+      })
+      .returning();
+    return inserted;
+  }
+
+  async getLpPosition(lpAddress: string, chain: string): Promise<LpPosition | undefined> {
+    const [row] = await db
+      .select()
+      .from(lpPositions)
+      .where(and(eq(lpPositions.lpAddress, lpAddress), eq(lpPositions.chain, chain)));
+    return row || undefined;
+  }
+
+  async getLpPositions(chain: string): Promise<LpPosition[]> {
+    return await db.select().from(lpPositions).where(eq(lpPositions.chain, chain));
   }
 }
 

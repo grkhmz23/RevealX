@@ -4,6 +4,7 @@ import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
 import { applySecurityMiddleware, corsOptions } from "./middleware/security";
 import { errorHandler, notFoundHandler } from "./middleware/error-handler";
+import { startBaseIndexer } from "./workers/baseIndexer";
 
 const app = express();
 
@@ -88,5 +89,10 @@ app.get("/health", (_req, res) => {
     reusePort: true,
   }, () => {
     log(`Server running on port ${port} (${process.env.NODE_ENV || "development"})`);
+    if (process.env.ENABLE_INDEXER === "true") {
+      startBaseIndexer();
+    } else {
+      log("ENABLE_INDEXER is not 'true'; skipping Base indexer startup.");
+    }
   });
 })();

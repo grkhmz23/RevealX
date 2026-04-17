@@ -10,8 +10,10 @@ import { jackpotService } from "./services/jackpot";
 import { rateLimiters, quotaMiddleware } from "./middleware/rate-limiter";
 import { idempotencyMiddleware } from "./middleware/idempotency";
 import { validateWalletAddress } from "./middleware/security";
+import { geoblockMiddleware } from "./middleware/geoblock";
 import { APIError, asyncHandler } from "./middleware/error-handler";
 import { withRetry } from "./utils/retry";
+import * as baseContractService from "./services/baseContractService";
 import { randomUUID } from "crypto";
 
 const solanaService = new SolanaService();
@@ -95,6 +97,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     "/api/games/create-and-play",
     rateLimiters.standard,
     quotaMiddleware,
+    geoblockMiddleware,
     idempotencyMiddleware,
     validateWalletAddress,
     asyncHandler(async (req, res) => {
@@ -170,6 +173,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     "/api/games/payout",
     rateLimiters.critical,
     quotaMiddleware,
+    geoblockMiddleware,
     idempotencyMiddleware,
     validateWalletAddress,
     asyncHandler(async (req, res) => {
@@ -295,6 +299,138 @@ export async function registerRoutes(app: Express): Promise<Server> {
       : await storage.getGamesByWallet(wallet);
       
     res.json(games);
+  }));
+
+  // v2 Campaign routes
+  app.get("/api/campaigns", rateLimiters.general, asyncHandler(async (_req, res) => {
+    const rows = await storage.getCampaigns();
+    res.json(rows);
+  }));
+
+  app.get("/api/campaigns/:id", rateLimiters.general, asyncHandler(async (req, res) => {
+    const { id } = req.params;
+    const campaign = await storage.getCampaign(id);
+    if (!campaign) {
+      throw new APIError("Campaign not found", 404, "NOT_FOUND");
+    }
+    res.json(campaign);
+  }));
+
+  app.get("/api/campaigns/:id/plays", rateLimiters.general, asyncHandler(async (req, res) => {
+    const { id } = req.params;
+    const limit = Math.min(parseInt(req.query.limit as string || "50", 10), 100);
+    const offset = parseInt(req.query.offset as string || "0", 10);
+    const plays = await storage.getCampaignPlays(id, limit, offset);
+    res.json(plays);
+  }));
+
+  app.post(
+    "/api/campaigns/:id/plays",
+    rateLimiters.standard,
+    geoblockMiddleware,
+    asyncHandler(async (req, res) => {
+      // This endpoint is a server-side helper for tracking off-chain plays
+      // In production, plays are created by the indexer from on-chain GameSettled events.
+      const { id } = req.params;
+      const { player, tier, wager, payout, requestId, blockNumber, txHash } = req.body;
+      const play = await storage.createCampaignPlay({
+        campaignId: id,
+        player,
+        tier,
+        wager,
+        payout,
+        requestId,
+        blockNumber,
+        txHash,
+      });
+      res.json(play);
+    })
+  );
+
+  // IPFS pinning helper (used by creator-new image upload)
+  app.post("/api/ipfs/pin", rateLimiters.general, asyncHandler(async (req, res) => {
+    const pinataJwt = process.env.PINATA_JWT;
+    if (!pinataJwt) {
+      throw new APIError(
+        "PINATA_JWT not configured. Set it to enable IPFS image pinning, or paste an IPFS/HTTPS URI manually.",
+        501,
+        "PINATA_NOT_CONFIGURED"
+      );
+    }
+
+    const { filename, mimeType, dataUrl } = req.body as {
+      filename?: string;
+      mimeType?: string;
+      dataUrl?: string;
+    };
+
+    if (!filename || !mimeType || !dataUrl) {
+      throw new APIError("filename, mimeType, and dataUrl are required", 400, "VALIDATION_ERROR");
+    }
+
+    const base64Data = dataUrl.split(",")[1];
+    if (!base64Data) {
+      throw new APIError("Invalid dataUrl format", 400, "VALIDATION_ERROR");
+    }
+
+    const buffer = Buffer.from(base64Data, "base64");
+    const blob = new Blob([buffer], { type: mimeType });
+    const formData = new FormData();
+    formData.append("file", blob, filename);
+
+    const response = await fetch("https://api.pinata.cloud/pinning/pinFileToIPFS", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${pinataJwt}`,
+      },
+      body: formData as any,
+    });
+
+    if (!response.ok) {
+      const text = await response.text();
+      throw new APIError(`Pinata error: ${text}`, 502, "PINATA_ERROR");
+    }
+
+    const data = await response.json();
+    const ipfsHash = data.IpfsHash as string;
+    if (!ipfsHash) {
+      throw new APIError("Pinata response missing IpfsHash", 502, "PINATA_ERROR");
+    }
+
+    res.json({ ipfsHash, uri: `ipfs://${ipfsHash}` });
+  }));
+
+  // v2 Pool read routes
+  app.get("/api/pool/v2/fees", rateLimiters.general, asyncHandler(async (_req, res) => {
+    const poolAddress = process.env.V2_REVEALX_POOL_ADDRESS;
+    if (!poolAddress) {
+      throw new APIError("V2 pool not configured", 501, "NOT_CONFIGURED");
+    }
+    const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+    const plays = await storage.getCampaignPlaysSince(sevenDaysAgo);
+    let netEdge = 0;
+    for (const play of plays) {
+      const wager = parseFloat(play.wager || "0");
+      const payout = parseFloat(play.payout || "0");
+      netEdge += Math.max(0, wager - payout);
+    }
+    const fees7d = netEdge * 0.3; // 30% protocol fee of net house edge
+    const tvl = parseFloat(await baseContractService.getPoolTvl(poolAddress as `0x${string}`));
+    const apy = tvl > 0 ? (fees7d * 52 / tvl) * 100 : 0;
+    res.json({ fees7d: fees7d.toFixed(6), tvl: tvl.toFixed(6), apy: apy.toFixed(2) });
+  }));
+
+  app.get("/api/pool/v2", rateLimiters.general, asyncHandler(async (_req, res) => {
+    const poolAddress = process.env.V2_REVEALX_POOL_ADDRESS;
+    if (!poolAddress) {
+      throw new APIError("V2 pool not configured", 501, "NOT_CONFIGURED");
+    }
+    const [tvl, maxPayout, maxPayoutBps] = await Promise.all([
+      baseContractService.getPoolTvl(poolAddress as `0x${string}`),
+      baseContractService.getPoolMaxPayout(poolAddress as `0x${string}`),
+      baseContractService.getPoolMaxPayoutBps(poolAddress as `0x${string}`),
+    ]);
+    res.json({ tvl, maxPayout, maxPayoutBps });
   }));
 
   // RPC Proxy (existing - for Solana)

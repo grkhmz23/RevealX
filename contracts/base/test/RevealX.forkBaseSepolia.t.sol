@@ -21,8 +21,9 @@ import {GameManager} from "../src/GameManager.sol";
  *      3. Full play -> fulfill -> win flow works end-to-end when coordinator is impersonated.
  */
 contract RevealXForkBaseSepoliaTest is Test {
-    // Address from the original spec — MUST BE VERIFIED before mainnet deploy.
-    address public constant BASE_SEPOLIA_VRF_COORDINATOR = 0x5CE8D5A2BC84beb22a398CCA51996F7930313D61;
+    // Verified Base Sepolia VRF v2.5 coordinator per Chainlink docs:
+    // https://docs.chain.link/vrf/v2-5/supported-networks#base-mainnet
+    address public constant BASE_SEPOLIA_VRF_COORDINATOR = 0x5C210eF41CD1a72de73bF76eC39637bB0d3d7BEE;
 
     MockUSDC public usdc;
     RevealXPool public pool;
